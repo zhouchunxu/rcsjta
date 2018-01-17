@@ -17,21 +17,21 @@ import com.gsma.services.rcs.RcsServiceRegistration;
 interface IChatService {
 
 	boolean isServiceRegistered();
-	
+
 	int getServiceRegistrationReasonCode();
-    
+
 	void addEventListener(IRcsServiceRegistrationListener listener);
 
 	void removeEventListener(IRcsServiceRegistrationListener listener);
 
 	IChatServiceConfiguration getConfiguration();
-    
+
 	IGroupChat initiateGroupChat(in List<ContactId> contacts, in String subject);
 
 	IOneToOneChat getOneToOneChat(in ContactId contact);
 
 	IGroupChat getGroupChat(in String chatId);
-	
+
 	void markMessageAsRead(in String msgId);
 
 	void addEventListener3(in IGroupChatListener listener);
@@ -51,6 +51,8 @@ interface IChatService {
 	boolean isAllowedToInitiateGroupChat();
 
 	boolean isAllowedToInitiateGroupChat2(in ContactId contact);
+
+//	void reportMessage(in String msgId);
 
 	void deleteOneToOneChats();
 

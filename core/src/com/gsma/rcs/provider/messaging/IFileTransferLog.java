@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +50,7 @@ public interface IFileTransferLog {
      * Add one to one file transfer
      * 
      * @param fileTransferId File Transfer ID
+     * @param chatId the identity of the one-to-one chat
      * @param contact Contact ID
      * @param direction Direction
      * @param content File content
@@ -64,9 +66,32 @@ public interface IFileTransferLog {
      * @param fileIconExpiration the time when file icon on the content server is no longer valid to
      *            download.
      */
-    void addOneToOneFileTransfer(String fileTransferId, ContactId contact, Direction direction,
-            MmContent content, MmContent fileIcon, State state, ReasonCode reasonCode,
-            long timestamp, long timestampSent, long fileExpiration, long fileIconExpiration);
+    void addOneToOneFileTransfer(String fileTransferId, String chatId, ContactId contact,
+            Direction direction, MmContent content, MmContent fileIcon, State state,
+            ReasonCode reasonCode, long timestamp, long timestampSent, long fileExpiration,
+            long fileIconExpiration);
+
+    /**
+     * Add an outgoing one to many file transfer
+     *
+     * @param fileTransferId the identity of the file transfer
+     * @param chatId the identity of the one-to-many chat
+     * @param recipients the recipients
+     * @param content the File content
+     * @param fileIcon the fileIcon content
+     * @param state File transfer state
+     * @param reasonCode Reason code
+     * @param timestamp Local timestamp for outgoing mass file transfer
+     * @param timestampSent Timestamp sent in payload for outgoing mass file transfer
+     * @param fileExpiration the time when file on the content server is no longer valid to
+     *            download.
+     * @param fileIconExpiration the time when file icon on the content server is no longer valid to
+     *            download.
+     */
+    void addOutgoingOneToManyFileTransfer(String fileTransferId, String chatId,
+            Set<ContactId> recipients, MmContent content, MmContent fileIcon, State state,
+            ReasonCode reasonCode, long timestamp, long timestampSent, long fileExpiration,
+            long fileIconExpiration);
 
     /**
      * Add an outgoing File Transfer supported by Group Chat
@@ -268,6 +293,14 @@ public interface IFileTransferLog {
      * @return true if it is group file transfer
      */
     boolean isGroupFileTransfer(String fileTransferId);
+
+    /**
+     * Is one-to-many file transfer
+     *
+     * @param fileTransferId the file transfer ID
+     * @return true if it is one-to-many file transfer
+     */
+    boolean isOneToManyFileTransfer(String fileTransferId);
 
     /**
      * Get file transfer timestamp from file transfer Id

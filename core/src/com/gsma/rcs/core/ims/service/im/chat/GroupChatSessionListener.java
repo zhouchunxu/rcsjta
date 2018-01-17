@@ -23,8 +23,7 @@
 package com.gsma.rcs.core.ims.service.im.chat;
 
 import com.gsma.rcs.core.ims.protocol.msrp.MsrpSession.TypeMsrpChunk;
-import com.gsma.services.rcs.chat.GroupChat;
-import com.gsma.services.rcs.chat.GroupChat.ParticipantStatus;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.Participant.Status;
 import com.gsma.services.rcs.contact.ContactId;
 
 import java.util.Map;
@@ -41,7 +40,7 @@ public interface GroupChatSessionListener extends ChatSessionListener {
      * @param status ParticipantStatus for the contact
      * @param timestamp Local timestamp when got notification
      */
-    void onConferenceEventReceived(ContactId contact, ParticipantStatus status, long timestamp);
+    void onConferenceEventReceived(ContactId contact, Status status, long timestamp);
 
     /**
      * A session invitation has been received
@@ -52,7 +51,7 @@ public interface GroupChatSessionListener extends ChatSessionListener {
      * @param timestamp Local timestamp when got invitation
      */
     void onSessionInvited(ContactId contact, String subject,
-            Map<ContactId, GroupChat.ParticipantStatus> participants, long timestamp);
+                          Map<ContactId, Status> participants, long timestamp);
 
     /**
      * Chat is auto-accepted and the session is in the process of being started
@@ -63,7 +62,7 @@ public interface GroupChatSessionListener extends ChatSessionListener {
      * @param timestamp Local timestamp when got invitation
      */
     void onSessionAutoAccepted(ContactId contact, String subject,
-            Map<ContactId, GroupChat.ParticipantStatus> participants, long timestamp);
+                               Map<ContactId, Status> participants, long timestamp);
 
     /**
      * One or several participants has been updated
@@ -71,8 +70,8 @@ public interface GroupChatSessionListener extends ChatSessionListener {
      * @param updatedParticipants Updated participants
      * @param allParticipants All group participants
      */
-    void onParticipantsUpdated(Map<ContactId, ParticipantStatus> updatedParticipants,
-            Map<ContactId, ParticipantStatus> allParticipants);
+    void onParticipantsUpdated(Map<ContactId, Status> updatedParticipants,
+            Map<ContactId, Status> allParticipants);
 
     /**
      * Handle Delivery report send via MSRP Failure

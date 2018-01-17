@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2014 Sony Mobile Communications Inc.
  * Copyright (C) 2010-2016 Orange.
+ * Copyright (C) 2017 China Mobile.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,13 +21,12 @@ package com.gsma.rcs.service.broadcaster;
 import com.gsma.rcs.platform.AndroidFactory;
 import com.gsma.rcs.utils.IntentUtils;
 import com.gsma.rcs.utils.logger.Logger;
-import com.gsma.services.rcs.chat.ChatLog.Message.Content;
-import com.gsma.services.rcs.chat.ChatLog.Message.Content.Status;
-import com.gsma.services.rcs.chat.GroupChat.ParticipantStatus;
-import com.gsma.services.rcs.chat.GroupChat.ReasonCode;
-import com.gsma.services.rcs.chat.GroupChat.State;
 import com.gsma.services.rcs.chat.GroupChatIntent;
 import com.gsma.services.rcs.chat.IGroupChatListener;
+import com.gsma.services.rcs.chat.ChatLog.Message.Content;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.Participant.Status;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.ReasonCode;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.State;
 import com.gsma.services.rcs.contact.ContactId;
 import com.gsma.services.rcs.groupdelivery.GroupDeliveryInfo;
 
@@ -61,7 +61,7 @@ public class GroupChatEventBroadcaster implements IGroupChatEventBroadcaster {
 
     @Override
     public void broadcastMessageStatusChanged(String chatId, String mimeType, String msgId,
-            Status status, Content.ReasonCode reasonCode) {
+                                              Content.Status status, Content.ReasonCode reasonCode) {
         int rcsStatus = status.toInt();
         int rcsReasonCode = reasonCode.toInt();
         final int N = mGroupChatListeners.beginBroadcast();
@@ -96,9 +96,56 @@ public class GroupChatEventBroadcaster implements IGroupChatEventBroadcaster {
         mGroupChatListeners.finishBroadcast();
     }
 
+
+    @Override
+    public void broadcastSubjectChanged(String chatId, String subject) {
+        final int N = mGroupChatListeners.beginBroadcast();
+        for (int i = 0; i < N; i++) {
+            try {
+                mGroupChatListeners.getBroadcastItem(i).onSubjectChanged(chatId, subject);
+            } catch (RemoteException e) {
+                if (logger.isActivated()) {
+                    logger.error("Can't notify listener", e);
+                }
+            }
+        }
+        mGroupChatListeners.finishBroadcast();
+    }
+
+    @Override
+    public void broadcastOwnershipChanged(String chatId, ContactId contact) {
+        final int N = mGroupChatListeners.beginBroadcast();
+        for (int i = 0; i < N; i++) {
+            try {
+                mGroupChatListeners.getBroadcastItem(i).onOwnershipChanged(chatId, contact);
+            } catch (RemoteException e) {
+                if (logger.isActivated()) {
+                    logger.error("Can't notify listener", e);
+                }
+            }
+        }
+        mGroupChatListeners.finishBroadcast();
+    }
+
+    @Override
+    public void broadcastParticipantAliasChanged(String chatId, ContactId contact, String alias) {
+        final int N = mGroupChatListeners.beginBroadcast();
+        for (int i = 0; i < N; i++) {
+            try {
+                mGroupChatListeners.getBroadcastItem(i).onParticipantAliasChanged(chatId, contact,
+                        alias);
+            } catch (RemoteException e) {
+                if (logger.isActivated()) {
+                    logger.error("Can't notify listener", e);
+                }
+            }
+        }
+        mGroupChatListeners.finishBroadcast();
+    }
+
     @Override
     public void broadcastParticipantStatusChanged(String chatId, ContactId contact,
-            ParticipantStatus status) {
+            Status status) {
         final int N = mGroupChatListeners.beginBroadcast();
         for (int i = 0; i < N; i++) {
             try {

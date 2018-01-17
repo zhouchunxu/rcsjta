@@ -24,7 +24,6 @@ package com.gsma.rcs.provider.messaging;
 
 import com.gsma.services.rcs.RcsService;
 import com.gsma.services.rcs.chat.ChatLog;
-import com.gsma.services.rcs.chat.GroupChat;
 
 import android.net.Uri;
 
@@ -57,14 +56,14 @@ public class GroupChatData {
     /**
      * State of chat room.
      * 
-     * @see GroupChat.State
+     * @see ChatLog.GroupChat.State
      */
     /* package private */static final String KEY_STATE = ChatLog.GroupChat.STATE;
 
     /**
      * Reason code associated with the group chat state.
      * 
-     * @see GroupChat.ReasonCode
+     * @see ChatLog.GroupChat.ReasonCode
      */
     /* package private */static final String KEY_REASON_CODE = ChatLog.GroupChat.REASON_CODE;
 

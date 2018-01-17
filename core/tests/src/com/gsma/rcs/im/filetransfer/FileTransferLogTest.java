@@ -34,7 +34,7 @@ import com.gsma.rcs.utils.ContactUtilMockContext;
 import com.gsma.rcs.utils.MimeManager;
 import com.gsma.services.rcs.RcsService.Direction;
 import com.gsma.services.rcs.RcsService.ReadStatus;
-import com.gsma.services.rcs.chat.GroupChat;
+import com.gsma.services.rcs.chat.ChatLog;
 import com.gsma.services.rcs.contact.ContactId;
 import com.gsma.services.rcs.contact.ContactUtil;
 import com.gsma.services.rcs.filetransfer.FileTransfer;
@@ -190,12 +190,12 @@ public class FileTransferLogTest extends AndroidTestCase {
 
     public void testAddOutgoingGroupFileTransfer() {
         // Add entry
-        Map<ContactId, GroupChat.ParticipantStatus> participants = new HashMap<>();
-        participants.put(mContact, GroupChat.ParticipantStatus.INVITING);
+        Map<ContactId, ChatLog.GroupChat.Participant.Status> participants = new HashMap<>();
+        participants.put(mContact, ChatLog.GroupChat.Participant.Status.INVITING);
         Set<ContactId> recipients = new HashSet<>();
         recipients.add(mContact);
-        mMessagingLog.addGroupChat(mChatId, null, null, participants, GroupChat.State.INITIATING,
-                GroupChat.ReasonCode.UNSPECIFIED, Direction.OUTGOING, mTimestamp);
+        mMessagingLog.addGroupChat(mChatId, null, null, participants, ChatLog.GroupChat.State.INITIATING,
+                ChatLog.GroupChat.ReasonCode.UNSPECIFIED, Direction.OUTGOING, mTimestamp);
         mMessagingLog.addOutgoingGroupFileTransfer(mFileTransferId, mChatId, mContent,
                 ICON_CONTENT, recipients, State.INITIATING, ReasonCode.UNSPECIFIED, mTimestamp,
                 mTimestampSent);

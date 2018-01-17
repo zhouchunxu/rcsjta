@@ -163,6 +163,14 @@ public class HistoryLog {
     public static final String CHAT_ID = "chat_id";
 
     /**
+     * The name of the column containing the conversation ID.
+     * <P>
+     * Type: TEXT
+     * </P>
+     */
+    public static final String CONVERSATION_ID = "conversation_id";
+
+    /**
      * The name of the column containing the content of the message if this entry corresponds to a
      * content message or the file URI if this entry is a file transfer, image share, video share
      * etc.

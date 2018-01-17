@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2015 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,6 +106,8 @@ public class MobileNetworkAccess extends NetworkAccess {
             case TelephonyManager.NETWORK_TYPE_HSUPA:
             case TelephonyManager.NETWORK_TYPE_HSPA:
                 return "3GPP-UTRAN-FDD";
+            case TelephonyManager.NETWORK_TYPE_LTE:
+                return "3GPP-E-UTRAN-TDD";
             default:
                 return null;
         }
@@ -130,6 +133,8 @@ public class MobileNetworkAccess extends NetworkAccess {
                 return "HSUPA";
             case TelephonyManager.NETWORK_TYPE_HSPA:
                 return "HSPA";
+			case TelephonyManager.NETWORK_TYPE_LTE:
+                return "LTE";
             default:
                 return "unknown";
         }

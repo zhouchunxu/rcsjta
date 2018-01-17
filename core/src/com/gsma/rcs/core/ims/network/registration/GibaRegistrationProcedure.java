@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2015 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,14 +29,11 @@ import com.gsma.rcs.core.ims.protocol.PayloadException;
 import com.gsma.rcs.core.ims.protocol.sip.SipRequest;
 import com.gsma.rcs.core.ims.protocol.sip.SipResponse;
 import com.gsma.rcs.core.ims.userprofile.UserProfile;
-import com.gsma.rcs.platform.AndroidFactory;
 import com.gsma.rcs.utils.ContactUtil;
-import com.gsma.rcs.utils.ContactUtil.PhoneNumber;
 import com.gsma.rcs.utils.PhoneUtils;
+import com.gsma.rcs.utils.ContactUtil.PhoneNumber;
+import com.gsma.rcs.utils.TelephonyUtils;
 import com.gsma.rcs.utils.logger.Logger;
-
-import android.content.Context;
-import android.telephony.TelephonyManager;
 
 import java.text.ParseException;
 import java.util.ListIterator;
@@ -83,10 +81,8 @@ public class GibaRegistrationProcedure extends RegistrationProcedure {
      * Initialize procedure
      */
     public void init() {
-        TelephonyManager mgr = (TelephonyManager) AndroidFactory.getApplicationContext()
-                .getSystemService(Context.TELEPHONY_SERVICE);
-        mImsi = mgr.getSubscriberId();
-        String mcc_mnc = mgr.getSimOperator();
+        mImsi = TelephonyUtils.getCurrentSubscriberId();
+        String mcc_mnc = TelephonyUtils.getSimOperator();
         mMcc = mcc_mnc.substring(0, 3);
         mMnc = mcc_mnc.substring(3);
         if (mcc_mnc.length() == 5) {

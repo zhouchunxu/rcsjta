@@ -2,6 +2,7 @@
  * Software Name : RCS IMS Stack
  *
  * Copyright (C) 2010-2016 Orange.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +44,11 @@ public class Capabilities implements Parcelable {
      * Video sharing support
      */
     private boolean mVideoSharing = false;
+
+    /**
+     * Standalone messaging support
+     */
+    private boolean mStandaloneMessaging = false;
 
     /**
      * IM session support
@@ -100,10 +106,16 @@ public class Capabilities implements Parcelable {
     public static final int CAPABILITY_VIDEO_SHARING = 0x00000010;
 
     /**
+     * Indicates the standalone messaging capability is supported.
+     */
+    public static final int CAPABILITY_STANDALONE_MESSAGING = 0x00000020;
+
+    /**
      * Constructor
      *
      * @param imageSharing Image sharing support
      * @param videoSharing Video sharing support
+     * @param standaloneMessaging Standalone messaging support
      * @param imSession IM/Chat support
      * @param fileTransfer File transfer support
      * @param geolocPush Geolocation push support
@@ -112,11 +124,12 @@ public class Capabilities implements Parcelable {
      * @param timestamp timestamp of last capability response
      * @hide
      */
-    public Capabilities(boolean imageSharing, boolean videoSharing, boolean imSession,
-            boolean fileTransfer, boolean geolocPush, Set<String> extensions, boolean automata,
-            long timestamp) {
+    public Capabilities(boolean imageSharing, boolean videoSharing, boolean standaloneMessaging,
+            boolean imSession, boolean fileTransfer, boolean geolocPush, Set<String> extensions,
+            boolean automata, long timestamp) {
         mImageSharing = imageSharing;
         mVideoSharing = videoSharing;
+        mStandaloneMessaging = standaloneMessaging;
         mImSession = imSession;
         mFileTransfer = fileTransfer;
         mGeolocPush = geolocPush;
@@ -134,6 +147,7 @@ public class Capabilities implements Parcelable {
     public Capabilities(Parcel source) {
         mImageSharing = source.readInt() != 0;
         mVideoSharing = source.readInt() != 0;
+        mStandaloneMessaging = source.readInt() != 0;
         mImSession = source.readInt() != 0;
         mFileTransfer = source.readInt() != 0;
 
@@ -171,6 +185,7 @@ public class Capabilities implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeInt(mImageSharing ? 1 : 0);
         dest.writeInt(mVideoSharing ? 1 : 0);
+        dest.writeInt(mStandaloneMessaging ? 1 : 0);
         dest.writeInt(mImSession ? 1 : 0);
         dest.writeInt(mFileTransfer ? 1 : 0);
         if (mExtensions != null) {
@@ -220,6 +235,17 @@ public class Capabilities implements Parcelable {
     @Deprecated
     public boolean isVideoSharingSupported() {
         return mVideoSharing;
+    }
+
+    /**
+     * Is standalone messaging supported
+     *
+     * @deprecated Use {@link #hasCapabilities(int capabilities)} instead.
+     * @return true if supported else returns false
+     */
+    @Deprecated
+    public boolean isStandaloneMessagingSupported() {
+        return mStandaloneMessaging;
     }
 
     /**
@@ -307,6 +333,7 @@ public class Capabilities implements Parcelable {
         result |= isCapabilitySupported(mGeolocPush, CAPABILITY_GEOLOC_PUSH);
         result |= isCapabilitySupported(mImageSharing, CAPABILITY_IMAGE_SHARING);
         result |= isCapabilitySupported(mVideoSharing, CAPABILITY_VIDEO_SHARING);
+        result |= isCapabilitySupported(mStandaloneMessaging, CAPABILITY_STANDALONE_MESSAGING);
         return result;
     }
 

@@ -86,7 +86,11 @@ public class RcsSettingsData {
         /**
          * Digest authentication
          */
-        DIGEST(1);
+        DIGEST(1),
+        /**
+         * IMS AKA authentication
+         */
+        AKA(2);
 
         private final int mValue;
 
@@ -129,7 +133,6 @@ public class RcsSettingsData {
      * chat invitations.
      */
     public enum ImSessionStartMode {
-
         /**
          * Group chat session is accepted when opening conversation
          */
@@ -444,7 +447,11 @@ public class RcsSettingsData {
         /**
          * Crane release
          */
-        CRANE(2);
+        CRANE(2),
+        /**
+         * China Mobile custom release
+         */
+        CHINA_MOBILE(3);
 
         private int mValue;
 
@@ -507,6 +514,7 @@ public class RcsSettingsData {
     // ---------------------------------------------------------------------------
     // Service settings
     // ---------------------------------------------------------------------------
+
     /**
      * Max file-icon size
      */
@@ -530,6 +538,12 @@ public class RcsSettingsData {
      */
     public static final String MAX_CHAT_PARTICIPANTS = "MaxChatParticipants";
     /* package private */static final Integer DEFAULT_MAX_CHAT_PARTICIPANTS = 10;
+
+    /**
+     * Max length of a standalone message
+     */
+    public static final String MAX_STANDALONE_MSG_LENGTH = "MaxStandaloneMsgLength";
+    /* package private */static final Integer DEFAULT_MAX_STANDALONE_MSG_LENGTH = 100;
 
     /**
      * Max length of a chat message
@@ -712,6 +726,12 @@ public class RcsSettingsData {
     /* package private */static final String DEFAULT_USERPROFILE_IMS_HOME_DOMAIN = null;
 
     /**
+     * IMS public URI of PC
+     */
+    public static final String USERPROFILE_IMS_PUBLIC_ID_PC = "ImsPublicIdPc";
+    /* package private */static final ContactId DEFAULT_USERPROFILE_IMS_PUBLIC_ID_PC = null;
+
+    /**
      * IMS private URI or IMPI (for HTTP Digest only)
      */
     public static final String USERPROFILE_IMS_PRIVATE_ID = "ImsPrivateId";
@@ -796,6 +816,12 @@ public class RcsSettingsData {
     /* package private */static final String DEFAULT_FT_PROTOCOL = FileTransferProtocol.MSRP.name();
 
     /**
+     * IM mass URI for standalone messaging (1-N)
+     */
+    public static final String IM_MASS_URI = "ImMassUri";
+    /* package private */static final Uri DEFAULT_IM_MASS_URI = null;
+
+    /**
      * IM conference URI for group chat session
      */
     public static final String IM_CONF_URI = "ImConferenceUri";
@@ -806,6 +832,42 @@ public class RcsSettingsData {
      */
     public static final String ENDUSER_CONFIRMATION_URI = "EndUserConfReqUri";
     /* package private */static final String DEFAULT_ENDUSER_CONFIRMATION_URI = null;
+
+    /**
+     * Message store server adddress & port
+     */
+    public static final String MSG_STORE_SERVER = "MsgStoreServerAddr";
+    /* package private */static final Uri DEFAULT_MSG_STORE_SERVER = null;
+
+    /**
+     * Profile server address & port
+     */
+    public static final String PROFILE_SERVER = "ProfileServerAddr";
+    /* package private */static final Uri DEFAULT_PROFILE_SERVER = null;
+
+    /**
+     * Public account server address & port
+     */
+    public static final String PUBLICACCOUNT_SERVER = "PublicAccountServerAddr";
+    /* package private */static final Uri DEFAULT_PUBLICACCOUNT_SERVER = null;
+
+    /**
+     * SSO server address & port
+     */
+    public static final String SSO_SERVER = "SsoServerAddr";
+    /* package private */static final Uri DEFAULT_SSO_SERVER = null;
+
+    /**
+     * QRCARD server address & port
+     */
+    public static final String QRCARD_SERVER = "QrcardServerAddr";
+    /* package private */static final Uri DEFAULT_QRCARD_SERVER = null;
+
+    /**
+     * Pc application server address & port
+     */
+    public static final String PC_APPLICATION_SERVER = "PcApplicationServerAddr";
+    /* package private */static final Uri DEFAULT_PC_APPLICATION_SERVER = null;
 
     /**
      * UUID value for populating SIP instance
@@ -1038,6 +1100,12 @@ public class RcsSettingsData {
     /* package private */static final Boolean DEFAULT_CAPABILITY_IP_VIDEO_CALL = false;
 
     /**
+     * Standalone messaging capability
+     */
+    public static final String CAPABILITY_STANDALONE_MESSAGING = "CapabilityStandaloneMessaging";
+    /* package private */static final Boolean DEFAULT_CAPABILITY_STANDALONE_MESSAGING = false;
+
+    /**
      * Instant Messaging session capability
      */
     public static final String CAPABILITY_IM_SESSION = "CapabilityImSession";
@@ -1137,7 +1205,6 @@ public class RcsSettingsData {
      * Group chat Store & Forward to invite participants
      */
     public static final String GROUP_CHAT_INVITE_ONLY_FULL_SF = "GroupChatInviteOnlyFSF";
-
     /* package private */static final Boolean DEFAULT_GC_INVITE_ONLY_FULL_SF = false;
 
     /**
@@ -1156,11 +1223,9 @@ public class RcsSettingsData {
      * File transfer over HTTP always on
      */
     public static final String FT_HTTP_CAP_ALWAYS_ON = "ftHTTPCapAlwaysOn";
-
     /* package private */static final Boolean DEFAULT_FT_HTTP_CAP_ALWAYS_ON = false;
 
     public static final String MSG_DELIVERY_TIMEOUT = "msgDeliveryTimeout";
-
     /*
      * According to joyn Blackbird Product Definition Document Delivery Timeout - "This parameter
      * controls the timeout for the reception of Optional delivery reports for joyn messages after
@@ -1174,7 +1239,6 @@ public class RcsSettingsData {
      * Contacts validity period in one-one messaging
      */
     public static final String MSG_CAP_VALIDITY_PERIOD = "msgCapValidity";
-
     /* package private */static final Long DEFAULT_MSG_CAP_VALIDITY_PERIOD = 0L;
 
     /**
@@ -1514,6 +1578,8 @@ public class RcsSettingsData {
                 RcsSettingsData.DEFAULT_GEOLOC_EXPIRATION_TIME);
         sSettingsKeyDefaultValue.put(RcsSettingsData.MAX_CHAT_PARTICIPANTS,
                 RcsSettingsData.DEFAULT_MAX_CHAT_PARTICIPANTS);
+        sSettingsKeyDefaultValue.put(RcsSettingsData.MAX_STANDALONE_MSG_LENGTH,
+                RcsSettingsData.DEFAULT_MAX_STANDALONE_MSG_LENGTH);
         sSettingsKeyDefaultValue.put(RcsSettingsData.MAX_CHAT_MSG_LENGTH,
                 RcsSettingsData.DEFAULT_MAX_CHAT_MSG_LENGTH);
         sSettingsKeyDefaultValue.put(RcsSettingsData.MAX_GROUPCHAT_MSG_LENGTH,
@@ -1556,6 +1622,8 @@ public class RcsSettingsData {
                 RcsSettingsData.DEFAULT_USERPROFILE_IMS_DISPLAY_NAME);
         sSettingsKeyDefaultValue.put(RcsSettingsData.USERPROFILE_IMS_HOME_DOMAIN,
                 RcsSettingsData.DEFAULT_USERPROFILE_IMS_HOME_DOMAIN);
+        sSettingsKeyDefaultValue.put(RcsSettingsData.USERPROFILE_IMS_PUBLIC_ID_PC,
+                RcsSettingsData.DEFAULT_USERPROFILE_IMS_PUBLIC_ID_PC);
         sSettingsKeyDefaultValue.put(RcsSettingsData.USERPROFILE_IMS_PRIVATE_ID,
                 RcsSettingsData.DEFAULT_USERPROFILE_IMS_PRIVATE_ID);
         sSettingsKeyDefaultValue.put(RcsSettingsData.USERPROFILE_IMS_PASSWORD,
@@ -1583,10 +1651,24 @@ public class RcsSettingsData {
                 RcsSettingsData.DEFAULT_FT_HTTP_PASSWORD);
         sSettingsKeyDefaultValue.put(RcsSettingsData.FT_PROTOCOL,
                 RcsSettingsData.DEFAULT_FT_PROTOCOL);
+        sSettingsKeyDefaultValue.put(RcsSettingsData.IM_MASS_URI,
+                RcsSettingsData.DEFAULT_IM_MASS_URI);
         sSettingsKeyDefaultValue.put(RcsSettingsData.IM_CONF_URI,
                 RcsSettingsData.DEFAULT_IM_CONF_URI);
         sSettingsKeyDefaultValue.put(RcsSettingsData.ENDUSER_CONFIRMATION_URI,
                 RcsSettingsData.DEFAULT_ENDUSER_CONFIRMATION_URI);
+        sSettingsKeyDefaultValue.put(RcsSettingsData.MSG_STORE_SERVER,
+                RcsSettingsData.DEFAULT_MSG_STORE_SERVER);
+        sSettingsKeyDefaultValue.put(RcsSettingsData.PROFILE_SERVER,
+                RcsSettingsData.DEFAULT_PROFILE_SERVER);
+        sSettingsKeyDefaultValue.put(RcsSettingsData.PUBLICACCOUNT_SERVER,
+                RcsSettingsData.DEFAULT_PUBLICACCOUNT_SERVER);
+        sSettingsKeyDefaultValue.put(RcsSettingsData.SSO_SERVER,
+                RcsSettingsData.DEFAULT_SSO_SERVER);
+        sSettingsKeyDefaultValue.put(RcsSettingsData.QRCARD_SERVER,
+                RcsSettingsData.DEFAULT_QRCARD_SERVER);
+        sSettingsKeyDefaultValue.put(RcsSettingsData.PC_APPLICATION_SERVER,
+                RcsSettingsData.DEFAULT_PC_APPLICATION_SERVER);
         sSettingsKeyDefaultValue.put(RcsSettingsData.UUID, RcsSettingsData.DEFAULT_UUID);
         sSettingsKeyDefaultValue.put(RcsSettingsData.CAPABILITY_CS_VIDEO,
                 RcsSettingsData.DEFAULT_CAPABILITY_CS_VIDEO);
@@ -1598,6 +1680,8 @@ public class RcsSettingsData {
                 RcsSettingsData.DEFAULT_CAPABILITY_IP_VOICE_CALL);
         sSettingsKeyDefaultValue.put(RcsSettingsData.CAPABILITY_IP_VIDEO_CALL,
                 RcsSettingsData.DEFAULT_CAPABILITY_IP_VIDEO_CALL);
+        sSettingsKeyDefaultValue.put(RcsSettingsData.CAPABILITY_STANDALONE_MESSAGING,
+                RcsSettingsData.DEFAULT_CAPABILITY_STANDALONE_MESSAGING);
         sSettingsKeyDefaultValue.put(RcsSettingsData.CAPABILITY_IM_SESSION,
                 RcsSettingsData.DEFAULT_CAPABILITY_IM_SESSION);
         sSettingsKeyDefaultValue.put(RcsSettingsData.CAPABILITY_IM_GROUP_SESSION,

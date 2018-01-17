@@ -43,6 +43,13 @@
             android:textStyle="bold"/>
 
         <android.support.v7.widget.AppCompatCheckBox
+            android:id="@+id/standalone_messaging"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/Standalone_messaging"
+            android:textStyle="bold"/>
+
+        <android.support.v7.widget.AppCompatCheckBox
             android:id="@+id/im"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"

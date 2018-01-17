@@ -24,7 +24,7 @@ package com.gsma.rcs.im.chat;
 import com.gsma.rcs.utils.ContactUtilMockContext;
 import com.gsma.services.rcs.RcsPermissionDeniedException;
 import com.gsma.services.rcs.chat.ChatLog;
-import com.gsma.services.rcs.chat.GroupChat.ParticipantStatus;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.Participant.Status;
 import com.gsma.services.rcs.contact.ContactId;
 import com.gsma.services.rcs.contact.ContactUtil;
 
@@ -49,23 +49,23 @@ public class ChatLogTest extends AndroidTestCase {
 
 
     public void testGetParticipants() throws RcsPermissionDeniedException {
-        Map<ContactId, ParticipantStatus> participants;
+        Map<ContactId, Status> participants;
         participants = ChatLog.GroupChat.getParticipants(mContext, "+330123=3,+330124=5");
         assertNotNull(participants);
         assertEquals(2, participants.size());
 
         ContactId contact1 = mContactUtils.formatContact("+330123");
-        AbstractMap.SimpleEntry<ContactId, ParticipantStatus> formatContactParticipant1 = new HashMap.SimpleEntry<>(
-                contact1, ParticipantStatus.CONNECTED);
-        AbstractMap.SimpleEntry<ContactId, ParticipantStatus> participantsParticipant1 = new HashMap.SimpleEntry<>(
+        AbstractMap.SimpleEntry<ContactId, Status> formatContactParticipant1 = new HashMap.SimpleEntry<>(
+                contact1, Status.CONNECTED);
+        AbstractMap.SimpleEntry<ContactId, Status> participantsParticipant1 = new HashMap.SimpleEntry<>(
                 contact1, participants.get(contact1));
 
         assertTrue(formatContactParticipant1.equals(participantsParticipant1));
 
         ContactId contact2 = mContactUtils.formatContact("+330124");
-        AbstractMap.SimpleEntry<ContactId, ParticipantStatus> formatContactParticipant2 = new HashMap.SimpleEntry<>(
-                contact2, ParticipantStatus.DEPARTED);
-        AbstractMap.SimpleEntry<ContactId, ParticipantStatus> participantsParticipant2 = new HashMap.SimpleEntry<>(
+        AbstractMap.SimpleEntry<ContactId, Status> formatContactParticipant2 = new HashMap.SimpleEntry<>(
+                contact2, Status.DEPARTED);
+        AbstractMap.SimpleEntry<ContactId, Status> participantsParticipant2 = new HashMap.SimpleEntry<>(
                 contact2, participants.get(contact2));
 
         assertTrue(formatContactParticipant2.equals(participantsParticipant2));

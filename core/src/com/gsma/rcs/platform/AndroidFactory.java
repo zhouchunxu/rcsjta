@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2015 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +28,7 @@ import android.content.Context;
 import com.gsma.rcs.platform.file.FileFactory;
 import com.gsma.rcs.platform.network.NetworkFactory;
 import com.gsma.rcs.platform.registry.RegistryFactory;
+import com.gsma.rcs.platform.telephony.TelephonyFactory;
 import com.gsma.rcs.provider.settings.RcsSettings;
 
 /**
@@ -63,6 +65,7 @@ public class AndroidFactory {
                     rcsSettings);
             RegistryFactory.loadFactory("com.gsma.rcs.platform.registry.AndroidRegistryFactory");
             FileFactory.loadFactory("com.gsma.rcs.platform.file.AndroidFileFactory");
+            TelephonyFactory.loadFactory("com.gsma.rcs.platform.telephony.AndroidTelephonyFactory");
         } catch (FactoryException e) {
             throw new IllegalStateException("Failed to load factory instance!", e);
         }

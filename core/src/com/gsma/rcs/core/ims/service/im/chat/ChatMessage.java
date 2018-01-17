@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +24,8 @@
 package com.gsma.rcs.core.ims.service.im.chat;
 
 import com.gsma.services.rcs.contact.ContactId;
+
+import java.util.Set;
 
 public class ChatMessage {
 
@@ -45,6 +48,16 @@ public class ChatMessage {
     private final long mTimestampSent;
 
     private final String mMsgId;
+
+    private String mConversationId;
+
+    private String mContributionId;
+
+    private String mChatId;
+
+    public Set<ContactId> mManyContact;
+
+    private String mCc;
 
     /**
      * Constructor for incoming message

@@ -81,6 +81,8 @@ public class ServiceProvisioning extends Fragment implements IProvisioningFragme
         mHelper.setLongEditText(R.id.MaxPhotoIconSize, RcsSettingsData.MAX_PHOTO_ICON_SIZE);
         mHelper.setIntEditText(R.id.MaxFreetextLength, RcsSettingsData.MAX_FREETXT_LENGTH);
         mHelper.setIntEditText(R.id.MaxChatParticipants, RcsSettingsData.MAX_CHAT_PARTICIPANTS);
+        mHelper.setIntEditText(R.id.MaxStandaloneMessageLength,
+                RcsSettingsData.MAX_STANDALONE_MSG_LENGTH);
         mHelper.setIntEditText(R.id.MaxChatMessageLength, RcsSettingsData.MAX_CHAT_MSG_LENGTH);
         mHelper.setIntEditText(R.id.MaxGroupChatMessageLength,
                 RcsSettingsData.MAX_GROUPCHAT_MSG_LENGTH);
@@ -139,6 +141,8 @@ public class ServiceProvisioning extends Fragment implements IProvisioningFragme
         mHelper.saveLongEditText(R.id.MaxPhotoIconSize, RcsSettingsData.MAX_PHOTO_ICON_SIZE);
         mHelper.saveIntEditText(R.id.MaxFreetextLength, RcsSettingsData.MAX_FREETXT_LENGTH);
         mHelper.saveIntEditText(R.id.MaxChatParticipants, RcsSettingsData.MAX_CHAT_PARTICIPANTS);
+        mHelper.saveIntEditText(R.id.MaxStandaloneMessageLength,
+                RcsSettingsData.MAX_STANDALONE_MSG_LENGTH);
         mHelper.saveIntEditText(R.id.MaxChatMessageLength, RcsSettingsData.MAX_CHAT_MSG_LENGTH);
         mHelper.saveIntEditText(R.id.MaxGroupChatMessageLength,
                 RcsSettingsData.MAX_GROUPCHAT_MSG_LENGTH);

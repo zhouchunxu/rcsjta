@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +32,9 @@ import com.gsma.services.rcs.RcsService;
 import com.gsma.services.rcs.RcsServiceControl;
 import com.gsma.services.rcs.RcsServiceException;
 import com.gsma.services.rcs.RcsServiceListener;
-import com.gsma.services.rcs.RcsServiceListener.ReasonCode;
 import com.gsma.services.rcs.RcsServiceNotAvailableException;
 import com.gsma.services.rcs.RcsServiceNotRegisteredException;
+import com.gsma.services.rcs.RcsServiceListener.ReasonCode;
 import com.gsma.services.rcs.contact.ContactId;
 
 import android.content.ComponentName;
@@ -209,7 +210,7 @@ public final class ChatService extends RcsService {
 
     /**
      * Returns a chat with a given contact
-     * 
+     *
      * @param contact ContactId
      * @return OneToOneChat
      * @throws RcsServiceNotAvailableException
@@ -298,9 +299,29 @@ public final class ChatService extends RcsService {
     }
 
     /**
+     * Report a message by its messageId from history.
+     *
+     * @param msgId Message Id
+     * @throws RcsServiceNotAvailableException
+     * @throws RcsGenericException
+     */
+    public void reportMessage(String msgId) throws RcsServiceNotAvailableException,
+            RcsGenericException {
+        if (mApi == null) {
+            throw new RcsServiceNotAvailableException();
+        }
+        try {
+//            mApi.reportMessage(msgId);
+        } catch (Exception e) {
+            RcsIllegalArgumentException.assertException(e);
+            throw new RcsGenericException(e);
+        }
+    }
+
+    /**
      * Deletes all one to one chat from history and abort/reject any associated ongoing session if
      * such exists.
-     * 
+     *
      * @throws RcsServiceNotAvailableException
      * @throws RcsGenericException
      */
@@ -336,7 +357,7 @@ public final class ChatService extends RcsService {
     /**
      * Deletes a one to one chat with a given contact from history and abort/reject any associated
      * ongoing session if such exists.
-     * 
+     *
      * @param contact the remote contact
      * @throws RcsServiceNotAvailableException
      * @throws RcsGenericException

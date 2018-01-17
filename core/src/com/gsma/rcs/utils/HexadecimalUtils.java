@@ -2,6 +2,7 @@
  * Software Name : RCS IMS Stack
  *
  * Copyright (C) 2010-2016 Orange.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,5 +76,26 @@ public class HexadecimalUtils {
             hexChars[j * 2 + 1] = hexArray[value & 0x0F];
         }
         return new String(hexChars);
+    }
+
+    /**
+     * Convert byte array into colon separated Hexadecimal string
+     *
+     * @param bytes
+     * @return String xx:yy:zz
+     */
+    public static String hexify(byte[] bytes) {
+        char[] hexDigits = {
+                '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
+        };
+        StringBuffer buf = new StringBuffer(bytes.length * 2);
+        for (int i = 0; i < bytes.length; ++i) {
+            if (i != 0) {
+                buf.append(":");
+            }
+            buf.append(hexDigits[(bytes[i] & 0xf0) >> 4]);
+            buf.append(hexDigits[bytes[i] & 0x0f]);
+        }
+        return buf.toString();
     }
 }

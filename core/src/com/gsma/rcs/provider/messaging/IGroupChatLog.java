@@ -24,9 +24,9 @@ package com.gsma.rcs.provider.messaging;
 
 import com.gsma.rcs.core.ims.service.im.chat.GroupChatInfo;
 import com.gsma.services.rcs.RcsService.Direction;
-import com.gsma.services.rcs.chat.GroupChat.ParticipantStatus;
-import com.gsma.services.rcs.chat.GroupChat.ReasonCode;
-import com.gsma.services.rcs.chat.GroupChat.State;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.Participant.Status;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.ReasonCode;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.State;
 import com.gsma.services.rcs.contact.ContactId;
 
 import android.database.Cursor;
@@ -54,8 +54,8 @@ public interface IGroupChatLog {
      * @param timestamp Timestamp
      */
     void addGroupChat(String chatId, ContactId contact, String subject,
-            Map<ContactId, ParticipantStatus> participants, State state, ReasonCode reasonCode,
-            Direction direction, long timestamp);
+                      Map<ContactId, Status> participants, State state, ReasonCode reasonCode,
+                      Direction direction, long timestamp);
 
     /**
      * Accept next Group Chat invitation
@@ -84,7 +84,7 @@ public interface IGroupChatLog {
      * @return True if an entry was updated, otherwise false
      */
     boolean setGroupChatParticipantsStateAndReasonCode(String chatId,
-            Map<ContactId, ParticipantStatus> participants, State state, ReasonCode reasonCode);
+                                                       Map<ContactId, Status> participants, State state, ReasonCode reasonCode);
 
     /**
      * Set group chat participants
@@ -93,7 +93,7 @@ public interface IGroupChatLog {
      * @param participants map of participants and associated status
      * @return True if an entry was updated, otherwise false
      */
-    boolean setGroupChatParticipants(String chatId, Map<ContactId, ParticipantStatus> participants);
+    boolean setGroupChatParticipants(String chatId, Map<ContactId, Status> participants);
 
     /**
      * Set group chat rejoin ID
@@ -151,7 +151,7 @@ public interface IGroupChatLog {
      * @param chatId Chat ID of the group chat
      * @return all group chat participants
      */
-    Map<ContactId, ParticipantStatus> getParticipants(String chatId);
+    Map<ContactId, Status> getParticipants(String chatId);
 
     /**
      * Get group chat participants from its chat ID
@@ -160,7 +160,7 @@ public interface IGroupChatLog {
      * @param statuses participant status to match
      * @return all group chat participants matching any of the specified participant statuses
      */
-    Map<ContactId, ParticipantStatus> getParticipants(String chatId, Set<ParticipantStatus> statuses);
+    Map<ContactId, Status> getParticipants(String chatId, Set<Status> statuses);
 
     /**
      * Get group chat data from its chat ID
@@ -184,4 +184,13 @@ public interface IGroupChatLog {
      * @return true if group chat is persisted
      */
     boolean isGroupChatPersisted(String chatId);
+
+    /**
+     * Set group chat subject
+     * 
+     * @param chatId Chat ID
+     * @param subject Subject
+     * @return True if an entry was updated, otherwise false
+     */
+    boolean setGroupChatSubject(String chatId, String subject);
 }

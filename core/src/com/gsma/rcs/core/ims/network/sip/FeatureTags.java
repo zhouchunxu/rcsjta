@@ -2,6 +2,7 @@
  * Software Name : RCS IMS Stack
  *
  * Copyright (C) 2010-2016 Orange.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +32,69 @@ public class FeatureTags {
     public final static String FEATURE_OMA_IM = "+g.oma.sip-im";
 
     /**
+     * OMA CPM pager mode standalone message feature tag
+     */
+    public final static String FEATURE_OMA_CPM_MSG = "urn%3Aurn-7%3A3gpp-service.ims.icsi.oma.cpm.msg";
+
+    /**
+     * OMA CPM pager mode group standalone message feature tag
+     */
+    public final static String FEATURE_OMA_CPM_MSG_GROUP = "urn%3Aurn-7%3A3gpp-service.ims.icsi.oma.cpm.msg.group";
+
+    /**
+     * OMA CPM large message mode standalone message feature tag
+     */
+    public final static String FEATURE_OMA_CPM_LARGE_MSG = "urn%3Aurn-7%3A3gpp-service.ims.icsi.oma.cpm.largemsg";
+
+    /**
+     * OMA CPM large message mode group standalone message feature tag
+     */
+    public final static String FEATURE_OMA_CPM_LARGE_MSG_GROUP = "urn%3Aurn-7%3A3gpp-service.ims.icsi.oma.cpm.largemsg.group";
+
+    /**
+     * OMA CPM session feature tag
+     */
+    public final static String FEATURE_OMA_CPM_SESSION = "urn%3Aurn-7%3A3gpp-service.ims.icsi.oma.cpm.session";
+
+    /**
+     * OMA CPM group session feature tag
+     */
+    public final static String FEATURE_OMA_CPM_SESSION_GROUP = "urn%3Aurn-7%3A3gpp-service.ims.icsi.oma.cpm.session.group";
+
+    /**
+     * OMA CPM file transfer feature tag
+     */
+    public final static String FEATURE_OMA_CPM_FILE_TRANSFER = "urn%3Aurn-7%3A3gpp-service.ims.icsi.oma.cpm.filetransfer";
+
+    /**
+     * OMA CPM group file transfer feature tag
+     */
+    public final static String FEATURE_OMA_CPM_FILE_TRANSFER_GROUP = "urn%3Aurn-7%3A3gpp-service.ims.icsi.oma.cpm.filetransfer.group";
+
+    /**
      * 3GPP video share feature tag
      */
     public final static String FEATURE_3GPP_VIDEO_SHARE = "+g.3gpp.cs-voice";
+
+    /**
+     * 3GPP CPM pager mode standalone message feature tag
+     */
+    public final static String FEATURE_3GPP_CPM_MSG = "+g.3gpp.icsi-ref=\"urn%3Aurn-7%3A3gpp-service.ims.icsi.oma.cpm.msg\"";
+
+    /**
+     * 3GPP CPM large message mode standalone message feature tag
+     */
+    public final static String FEATURE_3GPP_CPM_LARGE_MSG = "+g.3gpp.icsi-ref=\"urn%3Aurn-7%3A3gpp-service.ims.icsi.oma.cpm.largemsg\"";
+
+    /**
+     * 3GPP CPM session mode standalone message feature tag
+     */
+    public final static String FEATURE_3GPP_CPM_SESSION = "+g.3gpp.icsi-ref=\"urn%3Aurn-7%3A3gpp-service.ims.icsi.oma.cpm.session\"";
+
+    /**
+     * 3GPP CPM file transfer feature tag
+     */
+    public final static String FEATURE_3GPP_CPM_FILE_TRANSFER = "+g.3gpp.icsi-ref=\"urn%3Aurn-7%3A3gpp-service.ims.icsi.oma.cpm.filetransfer\"";
 
     /**
      * 3GPP image share feature tag
@@ -156,4 +217,44 @@ public class FeatureTags {
      * </pre>
      */
     public final static String FEATURE_SIP_AUTOMATA = "automata";
+
+    /**
+     * CMCC RCS custom feature tags suite
+     */
+    public static class Cmcc {
+        /**
+         * RCS-e vemoticon message feature tag
+         */
+        public final static String FEATURE_RCSE_EMOTICON = "urn%3Aurn-7%3A3gpp-application.ims.iari.rcs.mnc000.mcc460.vemoticon;version=1_0";
+
+        /**
+         * RCS-e cloud file feature tag
+         */
+        public final static String FEATURE_RCSE_CLOUD_FILE = "urn%3Aurn-7%3A3gpp-application.ims.iari.rcs.mnc000.mcc460.cloudfile;version=1_0";
+
+        /**
+         * RCS-e card message feature tag
+         */
+        public final static String FEATURE_RCSE_CARD_MESSAGE = "urn%3Aurn-7%3A3gpp-application.ims.iari.rcs.mnc000.mcc460.cardmsg;version=1_0";
+
+        /**
+         * RCS-e common extension feature tag
+         */
+        public final static String FEATURE_RCSE_COMMON_EXTENSION = "urn%3Aurn-7%3A3gpp-application.ims.iari.rcs.mnc000.mcc460.commonextension";
+
+        /**
+         * RCS-e group chat management feature tag
+         */
+        public final static String FEATURE_RCSE_GROUP_MANAGE = "urn%3Aurn-7%3A3gpp-application.ims.iari.rcs.mnc000.mcc460.gpmanage;vs=1";
+
+        /**
+         * RCS-e public account message feature tag
+         */
+        public final static String FEATURE_RCSE_PUBLIC_MESSAGE = "urn%3Aurn-7%3A3gpp-application.ims.iari.rcs.mnc000.mcc460.publicmsg";
+
+        /**
+         * RCS-e burn after reading cycle feature tag, only supported in 1-1/n
+         */
+        public final static String FEATURE_BAR_CYCLE = "barCycle";
+    }
 }

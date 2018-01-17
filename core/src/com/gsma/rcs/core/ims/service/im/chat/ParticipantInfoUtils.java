@@ -32,7 +32,7 @@ import com.gsma.rcs.core.ims.service.im.chat.resourcelist.ResourceListParser;
 import com.gsma.rcs.utils.ContactUtil;
 import com.gsma.rcs.utils.ContactUtil.PhoneNumber;
 import com.gsma.rcs.utils.logger.Logger;
-import com.gsma.services.rcs.chat.GroupChat.ParticipantStatus;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.Participant.Status;
 import com.gsma.services.rcs.contact.ContactId;
 
 import org.xml.sax.InputSource;
@@ -62,9 +62,9 @@ public class ParticipantInfoUtils {
      * @return the set of participants
      * @throws PayloadException
      */
-    public static Map<ContactId, ParticipantStatus> parseResourceList(String xml,
-            ParticipantStatus status) throws PayloadException {
-        Map<ContactId, ParticipantStatus> participants = new HashMap<ContactId, ParticipantStatus>();
+    public static Map<ContactId, Status> parseResourceList(String xml,
+                                                           Status status) throws PayloadException {
+        Map<ContactId, Status> participants = new HashMap<ContactId, Status>();
         try {
             InputSource pidfInput = new InputSource(new ByteArrayInputStream(xml.getBytes(UTF8)));
             ResourceListParser listParser = new ResourceListParser(pidfInput).parse();

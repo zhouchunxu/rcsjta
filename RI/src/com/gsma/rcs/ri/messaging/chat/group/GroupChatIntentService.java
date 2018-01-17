@@ -26,7 +26,6 @@ import com.gsma.rcs.ri.messaging.chat.ChatPendingIntentManager;
 import com.gsma.rcs.ri.utils.LogUtils;
 import com.gsma.rcs.ri.utils.RcsContactUtil;
 import com.gsma.services.rcs.chat.ChatLog;
-import com.gsma.services.rcs.chat.GroupChat;
 import com.gsma.services.rcs.chat.GroupChatIntent;
 import com.gsma.services.rcs.contact.ContactId;
 
@@ -121,7 +120,7 @@ public class GroupChatIntentService extends IntentService {
             Log.d(LOGTAG, "Group chat invitation =".concat(groupChatDAO.toString()));
         }
         /* Check if it's a spam */
-        if (groupChatDAO.getReasonCode() == GroupChat.ReasonCode.REJECTED_SPAM) {
+        if (groupChatDAO.getReasonCode() == ChatLog.GroupChat.ReasonCode.REJECTED_SPAM) {
             if (LogUtils.isActive) {
                 Log.e(LOGTAG, "Do nothing on a spam");
             }

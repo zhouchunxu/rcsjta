@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,6 +148,8 @@ public class StartService extends Service {
 
         mPoolTelephonyManagerIntent = PendingIntent.getBroadcast(mCtx, 0, new Intent(
                 ACTION_POOL_TELEPHONY_MANAGER), 0);
+
+        mStartServiceHandler = allocateBgHandler(STARTSERVICE_OPERATIONS_THREAD_NAME);
     }
 
     private Handler allocateBgHandler(String threadName) {
@@ -181,7 +184,7 @@ public class StartService extends Service {
         if (sLogger.isActivated()) {
             sLogger.debug("Start RCS service");
         }
-        mStartServiceHandler = allocateBgHandler(STARTSERVICE_OPERATIONS_THREAD_NAME);
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 
             mStartServiceHandler.post(new Runnable() {

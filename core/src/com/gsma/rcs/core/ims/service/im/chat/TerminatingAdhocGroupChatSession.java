@@ -47,7 +47,7 @@ import com.gsma.rcs.provider.settings.RcsSettings;
 import com.gsma.rcs.utils.ContactUtil;
 import com.gsma.rcs.utils.ContactUtil.PhoneNumber;
 import com.gsma.rcs.utils.logger.Logger;
-import com.gsma.services.rcs.chat.GroupChat.ParticipantStatus;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.Participant.Status;
 import com.gsma.services.rcs.contact.ContactId;
 
 import android.net.Uri;
@@ -81,7 +81,7 @@ public class TerminatingAdhocGroupChatSession extends GroupChatSession {
      * @throws PayloadException Thrown if constructor fails to get information from payload
      */
     public TerminatingAdhocGroupChatSession(InstantMessagingService imService, SipRequest invite,
-            ContactId contact, Map<ContactId, ParticipantStatus> participantsFromInvite,
+            ContactId contact, Map<ContactId, Status> participantsFromInvite,
             Uri remoteContact, RcsSettings rcsSettings, MessagingLog messagingLog, long timestamp,
             ContactManager contactManager) throws PayloadException {
         super(imService, contact, remoteContact, participantsFromInvite, rcsSettings, messagingLog,
@@ -122,7 +122,7 @@ public class TerminatingAdhocGroupChatSession extends GroupChatSession {
             Collection<ImsSessionListener> listeners = getListeners();
             ContactId contact = getRemoteContact();
             String subject = getSubject();
-            Map<ContactId, ParticipantStatus> participants = getParticipants();
+            Map<ContactId, Status> participants = getParticipants();
             /* Check if session should be auto-accepted once */
             long timestamp = getTimestamp();
             SipDialogPath dialogPath = getDialogPath();

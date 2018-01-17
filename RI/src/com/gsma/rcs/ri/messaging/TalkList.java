@@ -31,7 +31,6 @@ import com.gsma.services.rcs.RcsServiceException;
 import com.gsma.services.rcs.RcsServiceNotAvailableException;
 import com.gsma.services.rcs.chat.ChatLog;
 import com.gsma.services.rcs.chat.ChatService;
-import com.gsma.services.rcs.chat.GroupChat;
 import com.gsma.services.rcs.chat.GroupChatIntent;
 import com.gsma.services.rcs.chat.GroupChatListener;
 import com.gsma.services.rcs.chat.OneToOneChatIntent;
@@ -323,8 +322,8 @@ public class TalkList extends RcsActivity {
         };
         mGroupChatListener = new GroupChatListener() {
             @Override
-            public void onStateChanged(String chatId, GroupChat.State state,
-                    GroupChat.ReasonCode reasonCode) {
+            public void onStateChanged(String chatId, ChatLog.GroupChat.State state,
+                    ChatLog.GroupChat.ReasonCode reasonCode) {
             }
 
             @Override
@@ -345,7 +344,7 @@ public class TalkList extends RcsActivity {
 
             @Override
             public void onParticipantStatusChanged(String chatId, ContactId contact,
-                    GroupChat.ParticipantStatus status) {
+                    ChatLog.GroupChat.Participant.Status status) {
             }
 
             @Override

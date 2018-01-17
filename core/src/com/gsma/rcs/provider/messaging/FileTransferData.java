@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +63,11 @@ public class FileTransferData {
      * Id of chat
      */
     /* package private */static final String KEY_CHAT_ID = FileTransferLog.CHAT_ID;
+
+    /**
+     * Conversation Id
+     */
+    /* package private */static final String KEY_CONVERSATION_ID = FileTransferLog.CONVERSATION_ID;
 
     /**
      * Date of the transfer
@@ -202,6 +208,32 @@ public class FileTransferData {
      * The fileicon size (hidden field from client applications)
      */
     /* package private */static final String KEY_FILEICON_SIZE = "fileicon_size";
+
+    /**
+     * The file delivery message ID of the SIP delivery notification for OMA-CPM (hidden field
+     * from client applications)
+     */
+    /* package private */static final String KEY_DELIVERY_MESSAGE_ID = "delivery_message_id";
+
+    /**
+     * Device type of the file sender. Values: 1 (PC).
+     */
+    /* package private */static final String KEY_DEVICE_TYPE =  FileTransferLog.DEVICE_TYPE;
+
+    /**
+     * If file should be silence to user. Values: 1 (true), 0 (false).
+     */
+    /* package private */static final String KEY_SILENCE =  FileTransferLog.SILENCE;
+
+    /**
+     * If file is in burn-after-reading cycle. Values: 1 (true), 0 (false).
+     */
+    /* package private */static final String KEY_BAR_CYCLE = FileTransferLog.BAR_CYCLE;
+
+    /**
+     * File transfer duration of audio/video
+     */
+    /* package private */static final String KEY_DURATION = FileTransferLog.DURATION;
 
     /**
      * @see FileTransferLog#UNKNOWN_EXPIRATION

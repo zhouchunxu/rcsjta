@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,6 +80,7 @@ public abstract class ChatSession extends ImsServiceSession implements MsrpEvent
     private final MsrpManager mMsrpMgr;
     private final IsComposingManager mIsComposingMgr = new IsComposingManager(this);
     private final SessionActivityManager mActivityMgr;
+    private String mConversationId;
     private String mContributionId;
     private List<String> mFeatureTags = new ArrayList<>();
     private List<String> mAcceptContactTags = new ArrayList<>();
@@ -136,17 +138,17 @@ public abstract class ChatSession extends ImsServiceSession implements MsrpEvent
      *
      * @param imService InstantMessagingService
      * @param contact Remote contactId
-     * @param remoteContact Remote Contact URI
+     * @param remoteUri Remote Contact URI
      * @param rcsSettings RCS settings
      * @param messagingLog Messaging log
      * @param firstMsg First message in session
      * @param timestamp Local timestamp for the session
      * @param contactManager The contact manager accessor
      */
-    public ChatSession(InstantMessagingService imService, ContactId contact, Uri remoteContact,
+    public ChatSession(InstantMessagingService imService, ContactId contact, Uri remoteUri,
             RcsSettings rcsSettings, MessagingLog messagingLog, ChatMessage firstMsg,
             long timestamp, ContactManager contactManager) {
-        super(imService, contact, remoteContact, rcsSettings, timestamp, contactManager);
+        super(imService, contact, remoteUri, rcsSettings, timestamp, contactManager);
 
         mImService = imService;
         mImdnManager = imService.getImdnManager();
@@ -266,6 +268,24 @@ public abstract class ChatSession extends ImsServiceSession implements MsrpEvent
      */
     public SessionActivityManager getActivityManager() {
         return mActivityMgr;
+    }
+
+    /**
+     * Return the conversation ID
+     * 
+     * @return Conversation ID
+     */
+    public String getConversationID() {
+        return mConversationId;
+    }
+
+    /**
+     * Set the conversation ID
+     * 
+     * @param id Conversation ID
+     */
+    public void setConversationID(String id) {
+        mConversationId = id;
     }
 
     /**

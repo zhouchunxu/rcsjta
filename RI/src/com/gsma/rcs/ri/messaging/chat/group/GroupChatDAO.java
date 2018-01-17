@@ -21,9 +21,8 @@ package com.gsma.rcs.ri.messaging.chat.group;
 import com.gsma.rcs.ri.utils.ContactUtil;
 import com.gsma.services.rcs.RcsService.Direction;
 import com.gsma.services.rcs.chat.ChatLog;
-import com.gsma.services.rcs.chat.GroupChat;
-import com.gsma.services.rcs.chat.GroupChat.ReasonCode;
-import com.gsma.services.rcs.chat.GroupChat.State;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.ReasonCode;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.State;
 import com.gsma.services.rcs.contact.ContactId;
 
 import android.content.ContentResolver;
@@ -47,7 +46,7 @@ public class GroupChatDAO {
 
     private final String mParticipants;
 
-    private final GroupChat.State mState;
+    private final State mState;
 
     private final String mSubject;
 
@@ -55,9 +54,9 @@ public class GroupChatDAO {
 
     private static ContentResolver sContentResolver;
 
-    private final GroupChat.ReasonCode mReasonCode;
+    private final ReasonCode mReasonCode;
 
-    public GroupChat.State getState() {
+    public State getState() {
         return mState;
     }
 
@@ -81,7 +80,7 @@ public class GroupChatDAO {
         return mTimestamp;
     }
 
-    public GroupChat.ReasonCode getReasonCode() {
+    public ReasonCode getReasonCode() {
         return mReasonCode;
     }
 
@@ -131,7 +130,7 @@ public class GroupChatDAO {
             }
             String subject = cursor.getString(cursor
                     .getColumnIndexOrThrow(ChatLog.GroupChat.SUBJECT));
-            State state = GroupChat.State.valueOf(cursor.getInt(cursor
+            State state = ChatLog.GroupChat.State.valueOf(cursor.getInt(cursor
                     .getColumnIndexOrThrow(ChatLog.GroupChat.STATE)));
             Direction dir = Direction.valueOf(cursor.getInt(cursor
                     .getColumnIndexOrThrow(ChatLog.GroupChat.DIRECTION)));
@@ -139,7 +138,7 @@ public class GroupChatDAO {
                     .getColumnIndexOrThrow(ChatLog.GroupChat.TIMESTAMP));
             String participants = cursor.getString(cursor
                     .getColumnIndexOrThrow(ChatLog.GroupChat.PARTICIPANTS));
-            ReasonCode reasonCode = GroupChat.ReasonCode.valueOf(cursor.getInt(cursor
+            ReasonCode reasonCode = ChatLog.GroupChat.ReasonCode.valueOf(cursor.getInt(cursor
                     .getColumnIndexOrThrow(ChatLog.GroupChat.REASON_CODE)));
             String contact = cursor.getString(cursor
                     .getColumnIndexOrThrow(ChatLog.GroupChat.CONTACT));

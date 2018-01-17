@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,8 +56,8 @@ import com.gsma.rcs.provider.contact.ContactManager;
 import com.gsma.rcs.provider.messaging.FileTransferData;
 import com.gsma.rcs.provider.settings.RcsSettings;
 import com.gsma.rcs.provider.settings.RcsSettingsData.FileTransferProtocol;
-import com.gsma.rcs.utils.IdGenerator;
 import com.gsma.rcs.utils.NetworkRessourceManager;
+import com.gsma.rcs.utils.PhoneUtils;
 import com.gsma.rcs.utils.logger.Logger;
 import com.gsma.services.rcs.contact.ContactId;
 
@@ -101,14 +102,18 @@ public class TerminatingMsrpFileSharingSession extends ImsFileSharingSession imp
             ContactId remote, RcsSettings rcsSettings, long timestamp, long timestampSent,
             ContactManager contactManager) throws PayloadException, FileAccessException {
         super(imService, ContentManager.createMmContentFromSdp(invite, rcsSettings), remote,
-                FileTransferUtils.extractFileIcon(invite, rcsSettings), IdGenerator
-                        .generateMessageID(), rcsSettings, timestamp, contactManager);
+                PhoneUtils.formatContactIdToUri(remote), FileTransferUtils.extractFileIcon(invite,
+                        rcsSettings), FileTransferUtils.getFileTransferId(invite), rcsSettings,
+                timestamp, contactManager);
         mTimestampSent = timestampSent;
         // Create dialog path
         createTerminatingDialogPath(invite);
         // Set contribution ID
         String id = ChatUtils.getContributionId(invite);
         setContributionID(id);
+        // Set conversation ID
+        id = ChatUtils.getConversationId(invite);
+        setConversationID(id);
         if (shouldBeAutoAccepted()) {
             setSessionAccepted();
         }

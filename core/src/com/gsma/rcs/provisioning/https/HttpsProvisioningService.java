@@ -32,6 +32,7 @@ import com.gsma.rcs.provisioning.ProvisioningFailureReasons;
 import com.gsma.rcs.provisioning.ProvisioningInfo.Version;
 import com.gsma.rcs.provisioning.TermsAndConditionsRequest;
 import com.gsma.rcs.service.LauncherUtils;
+import com.gsma.rcs.utils.TelephonyUtils;
 import com.gsma.rcs.utils.TimerUtils;
 import com.gsma.rcs.utils.logger.Logger;
 
@@ -45,7 +46,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.os.IBinder;
-import android.telephony.TelephonyManager;
 import android.text.format.DateUtils;
 
 import java.io.IOException;
@@ -135,9 +135,7 @@ public class HttpsProvisioningService extends Service {
         }
         registerReceiver(retryReceiver, new IntentFilter(ACTION_RETRY));
 
-        TelephonyManager tm = (TelephonyManager) mContext
-                .getSystemService(Context.TELEPHONY_SERVICE);
-        String imsi = tm.getSubscriberId();
+        String imsi = TelephonyUtils.getCurrentSubscriberId();
         if (imsi == null) {
             /*
              * IMSI may be null if SIM card is not present or Telephony manager is not fully
@@ -146,7 +144,7 @@ public class HttpsProvisioningService extends Service {
              */
             imsi = LauncherUtils.getLastUserAccount(mContext);
         }
-        String imei = tm.getDeviceId();
+        String imei = TelephonyUtils.getDeviceId();
 
         mHttpsProvisioningMng = new HttpsProvisioningManager(imei, imsi, mContext,
                 mLocalContentResolver, mRetryIntent, first, user, mRcsSettings, mMessagingLog,

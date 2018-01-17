@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +45,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * File utilities
@@ -425,9 +428,42 @@ public class FileUtils {
      * @param pathOrFilename the path or filename
      * @return the mime type or null if not found
      */
-
     public static String getMimeTypeFromExtension(String pathOrFilename) {
         String ext = MimeManager.getFileExtension(pathOrFilename);
         return MimeManager.getInstance().getMimeType(ext);
+    }
+
+    /**
+     * Returns the fingerprint of a file with the specify algorithm
+     *
+     * @param file the file Uri
+     * @param algorithm hash algorithm to be used
+     * @return String as xx:yy:zz
+     * @throws NoSuchAlgorithmException
+     */
+    public static String getFingerprintOfFile(Uri file, String algorithm) {
+        FileInputStream fileInputStream = null;
+        try {
+            MessageDigest md = MessageDigest.getInstance(algorithm);
+            fileInputStream = (FileInputStream) AndroidFactory.getApplicationContext()
+                    .getContentResolver().openInputStream(file);
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = fileInputStream.read(buffer)) > 0) {
+                md.update(buffer, 0, length);
+            }
+            if (fileInputStream != null) {
+                fileInputStream.close();
+            }
+            return HexadecimalUtils.hexify(md.digest());
+        } catch (NoSuchAlgorithmException | IOException e) {
+            if (sLogger.isActivated()) {
+                sLogger.debug("Failed to get fingerprint from file :" + file + ", Message="
+                        + e.getMessage());
+            }
+        } finally {
+            CloseableUtils.tryToClose(fileInputStream);
+        }
+        return null;
     }
 }

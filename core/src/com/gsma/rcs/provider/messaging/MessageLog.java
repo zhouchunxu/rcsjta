@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +32,10 @@ import com.gsma.rcs.utils.IdGenerator;
 import com.gsma.rcs.utils.logger.Logger;
 import com.gsma.services.rcs.RcsService.Direction;
 import com.gsma.services.rcs.RcsService.ReadStatus;
-import com.gsma.services.rcs.chat.ChatLog.Message.Content.ReasonCode;
-import com.gsma.services.rcs.chat.ChatLog.Message.Content.Status;
 import com.gsma.services.rcs.chat.ChatLog.Message.GroupChatEvent;
 import com.gsma.services.rcs.chat.ChatLog.Message.MimeType;
+import com.gsma.services.rcs.chat.ChatLog.Message.Content.ReasonCode;
+import com.gsma.services.rcs.chat.ChatLog.Message.Content.Status;
 import com.gsma.services.rcs.contact.ContactId;
 import com.gsma.services.rcs.groupdelivery.GroupDeliveryInfo;
 
@@ -76,6 +77,9 @@ public class MessageLog implements IMessageLog {
             + MessageData.KEY_CONTACT;
 
     private static final int FIRST_COLUMN_IDX = 0;
+
+    private static final String SELECTION_QUEUED_STANDALONE_MESSAGES = MessageData.KEY_CHAT_ID
+            + "=? AND " + MessageData.KEY_STATUS + "=" + Status.SMS_QUEUED.toInt();
 
     private static final String SELECTION_QUEUED_ONETOONE_CHAT_MESSAGES = MessageData.KEY_CHAT_ID
             + "=? AND " + MessageData.KEY_STATUS + "=" + Status.QUEUED.toInt();
@@ -122,15 +126,16 @@ public class MessageLog implements IMessageLog {
         mRcsSettings = rcsSettings;
     }
 
-    private void addIncomingOneToOneMessage(ChatMessage msg, Status status, ReasonCode reasonCode) {
+    private void addIncomingOneToOneMessage(String chatId, ChatMessage msg, Status status,
+            ReasonCode reasonCode) {
         ContactId contact = msg.getRemoteContact();
         String msgId = msg.getMessageId();
         if (sLogger.isActivated()) {
-            sLogger.debug("Add incoming chat message: contact=" + contact + ", msg=" + msgId
+            sLogger.debug("Add incoming chat message: contact=" + contact + ", msgId=" + msgId
                     + ", status=" + status + ", reasonCode=" + reasonCode + ".");
         }
         ContentValues values = new ContentValues();
-        values.put(MessageData.KEY_CHAT_ID, contact.toString());
+        values.put(MessageData.KEY_CHAT_ID, chatId);
         values.put(MessageData.KEY_MESSAGE_ID, msgId);
         values.put(MessageData.KEY_CONTACT, contact.toString());
         values.put(MessageData.KEY_DIRECTION, Direction.INCOMING.toInt());
@@ -149,16 +154,16 @@ public class MessageLog implements IMessageLog {
     }
 
     @Override
-    public void addOutgoingOneToOneChatMessage(ChatMessage msg, Status status,
+    public void addOutgoingOneToOneChatMessage(String chatId, ChatMessage msg, Status status,
             ReasonCode reasonCode, long deliveryExpiration) {
         ContactId contact = msg.getRemoteContact();
         String msgId = msg.getMessageId();
         if (sLogger.isActivated()) {
-            sLogger.debug("Add outgoing chat message: contact=" + contact + ", msg=" + msgId
+            sLogger.debug("Add outgoing chat message: contact=" + contact + ", msgId=" + msgId
                     + ", status=" + status + ", reasonCode=" + reasonCode + ".");
         }
         ContentValues values = new ContentValues();
-        values.put(MessageData.KEY_CHAT_ID, contact.toString());
+        values.put(MessageData.KEY_CHAT_ID, chatId);
         values.put(MessageData.KEY_MESSAGE_ID, msgId);
         values.put(MessageData.KEY_CONTACT, contact.toString());
         values.put(MessageData.KEY_DIRECTION, Direction.OUTGOING.toInt());
@@ -177,21 +182,50 @@ public class MessageLog implements IMessageLog {
     }
 
     @Override
-    public void addOneToOneSpamMessage(ChatMessage msg) {
-        addIncomingOneToOneMessage(msg, Status.REJECTED, ReasonCode.REJECTED_SPAM);
+    public void addOutgoingOneToManyChatMessage(String chatId, ChatMessage msg,
+            Set<ContactId> recipients, Status status, ReasonCode reasonCode, long deliveryExpiration) {
+        String msgId = msg.getMessageId();
+        if (sLogger.isActivated()) {
+            sLogger.debug("Add outgoing one-to-many chat message: chatId=" + chatId + ", msgId="
+                    + msgId + ", status=" + status + ", reasonCode=" + reasonCode + ".");
+        }
+        ContentValues values = new ContentValues();
+        values.put(MessageData.KEY_CHAT_ID, chatId);
+        values.put(MessageData.KEY_MESSAGE_ID, msgId);
+        values.put(MessageData.KEY_CONTACT, "");//TODO
+        values.put(MessageData.KEY_DIRECTION, Direction.OUTGOING.toInt());
+        values.put(MessageData.KEY_READ_STATUS, ReadStatus.UNREAD.toInt());
+        values.put(MessageData.KEY_MIME_TYPE, msg.getMimeType());
+        values.put(MessageData.KEY_CONTENT, msg.getContent());
+        values.put(MessageData.KEY_TIMESTAMP, msg.getTimestamp());
+        values.put(MessageData.KEY_TIMESTAMP_SENT, msg.getTimestampSent());
+        values.put(MessageData.KEY_TIMESTAMP_DELIVERED, 0);
+        values.put(MessageData.KEY_TIMESTAMP_DISPLAYED, 0);
+        values.put(MessageData.KEY_DELIVERY_EXPIRATION, deliveryExpiration);
+        values.put(MessageData.KEY_EXPIRED_DELIVERY, 0);
+        values.put(MessageData.KEY_STATUS, status.toInt());
+        values.put(MessageData.KEY_REASON_CODE, reasonCode.toInt());
+        mLocalContentResolver.insert(MessageData.CONTENT_URI, values);
     }
 
     @Override
-    public void addOneToOneFailedDeliveryMessage(ChatMessage msg) {
-        addIncomingOneToOneMessage(msg, Status.FAILED, ReasonCode.FAILED_DELIVERY);
+    public void addOneToOneSpamMessage(String chatId, ChatMessage msg) {
+        addIncomingOneToOneMessage(chatId, msg, Status.REJECTED, ReasonCode.REJECTED_SPAM);
     }
 
     @Override
-    public void addIncomingOneToOneChatMessage(ChatMessage msg, boolean imdnDisplayedRequested) {
+    public void addOneToOneFailedDeliveryMessage(String chatId, ChatMessage msg) {
+        addIncomingOneToOneMessage(chatId, msg, Status.FAILED, ReasonCode.FAILED_DELIVERY);
+    }
+
+    @Override
+    public void addIncomingOneToOneChatMessage(String chatId, ChatMessage msg,
+            boolean imdnDisplayedRequested) {
         if (imdnDisplayedRequested) {
-            addIncomingOneToOneMessage(msg, Status.DISPLAY_REPORT_REQUESTED, ReasonCode.UNSPECIFIED);
+            addIncomingOneToOneMessage(chatId, msg, Status.DISPLAY_REPORT_REQUESTED,
+                    ReasonCode.UNSPECIFIED);
         } else {
-            addIncomingOneToOneMessage(msg, Status.RECEIVED, ReasonCode.UNSPECIFIED);
+            addIncomingOneToOneMessage(chatId, msg, Status.RECEIVED, ReasonCode.UNSPECIFIED);
         }
     }
 
@@ -483,6 +517,17 @@ public class MessageLog implements IMessageLog {
         Uri contentUri = Uri.withAppendedPath(MessageData.CONTENT_URI, msgId);
         Cursor cursor = mLocalContentResolver.query(contentUri, null, null, null, null);
         CursorUtil.assertCursorIsNotNull(cursor, contentUri);
+        return cursor;
+    }
+
+    @Override
+    public Cursor getQueuedStandaloneMessages(String chatId) {
+        String[] selectionArgs = new String[] {
+                chatId
+        };
+        Cursor cursor = mLocalContentResolver.query(MessageData.CONTENT_URI, null,
+                SELECTION_QUEUED_STANDALONE_MESSAGES, selectionArgs, ORDER_BY_TIMESTAMP_ASC);
+        CursorUtil.assertCursorIsNotNull(cursor, MessageData.CONTENT_URI);
         return cursor;
     }
 

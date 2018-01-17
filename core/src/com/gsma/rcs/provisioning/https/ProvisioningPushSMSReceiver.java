@@ -3,6 +3,7 @@
  * 
  * Copyright (C) 2016 Sony Mobile Communications Inc.
  * Copyright (C) 2010-2016 Orange.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,6 +34,7 @@ import com.gsma.rcs.provider.settings.RcsSettings;
 import com.gsma.rcs.provisioning.ProvisioningInfo;
 import com.gsma.rcs.service.LauncherUtils;
 import com.gsma.rcs.utils.NetworkUtils;
+import com.gsma.rcs.utils.TelephonyUtils;
 import com.gsma.rcs.utils.logger.Logger;
 
 import android.content.BroadcastReceiver;
@@ -41,7 +43,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.telephony.SmsMessage;
-import android.telephony.TelephonyManager;
 
 /**
  * Handles the network initiated configuration request i.e provisioning push sms sent to port 37273.
@@ -87,10 +88,8 @@ public class ProvisioningPushSMSReceiver extends BroadcastReceiver {
             final ContentResolver resolver = ctx.getContentResolver();
             final LocalContentResolver localResolver = new LocalContentResolver(resolver);
             final RcsSettings rcsSettings = RcsSettings.getInstance(localResolver);
-            final TelephonyManager telephonyManager = (TelephonyManager) ctx
-                    .getSystemService(Context.TELEPHONY_SERVICE);
 
-            if (smsData.contains(telephonyManager.getSubscriberId())) {
+            if (smsData.contains(TelephonyUtils.getCurrentSubscriberId())) {
                 resetConfigurationThenRestart(ctx, resolver, localResolver, rcsSettings);
             } else if (smsData.contains(rcsSettings.getUserProfileImsPrivateId())) {
                 if (NetworkUtils.getNetworkAccessType() == NetworkUtils.NETWORK_ACCESS_WIFI) {

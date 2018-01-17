@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +31,8 @@ import com.gsma.services.rcs.RcsService;
 import com.gsma.services.rcs.RcsServiceControl;
 import com.gsma.services.rcs.RcsServiceException;
 import com.gsma.services.rcs.RcsServiceListener;
-import com.gsma.services.rcs.RcsServiceListener.ReasonCode;
 import com.gsma.services.rcs.RcsServiceNotAvailableException;
+import com.gsma.services.rcs.RcsServiceListener.ReasonCode;
 import com.gsma.services.rcs.contact.ContactId;
 import com.gsma.services.rcs.filetransfer.FileTransfer.Disposition;
 
@@ -67,6 +68,8 @@ public final class FileTransferService extends RcsService {
     private IFileTransferService mApi;
 
     private final Map<OneToOneFileTransferListener, WeakReference<IOneToOneFileTransferListener>> mOneToOneFileTransferListeners = new WeakHashMap<>();
+
+    private final Map<OneToManyFileTransferListener, WeakReference<IOneToManyFileTransferListener>> mOneToManyFileTransferListeners = new WeakHashMap<>();
 
     private final Map<GroupFileTransferListener, WeakReference<IGroupFileTransferListener>> mGroupFileTransferListeners = new WeakHashMap<>();
 
@@ -286,6 +289,98 @@ public final class FileTransferService extends RcsService {
     }
 
     /**
+     * Returns true if it is possible to initiate file transfer to the contacts specified by the
+     * contacts parameter, else returns false.
+     *
+     * @param contacts the remote contacts
+     * @return boolean
+     * @throws RcsPersistentStorageException
+     * @throws RcsServiceNotAvailableException
+     * @throws RcsGenericException
+     */
+    public boolean isAllowedToTransferFileToMany(Set<ContactId> contacts)
+            throws RcsPersistentStorageException, RcsServiceNotAvailableException,
+            RcsGenericException {
+        if (mApi == null) {
+            throw new RcsServiceNotAvailableException();
+        }
+        try {
+            return mApi.isAllowedToTransferFileToMany(new ArrayList<>(contacts));
+
+        } catch (Exception e) {
+            RcsIllegalArgumentException.assertException(e);
+            RcsPersistentStorageException.assertException(e);
+            throw new RcsGenericException(e);
+        }
+    }
+
+    /**
+     * Transfers a file to a list of contacts. The parameter file contains the URI of the file to be
+     * transferred (for a local or a remote file). The parameter contact supports the following
+     * formats: MSISDN in national or international format, SIP address, SIP-URI or Tel-URI. If the
+     * format of the contact is not supported an exception is thrown.
+     *
+     * @deprecated Use
+     *             {@link #transferFile(ContactId contact, Uri file, Disposition disposition, boolean attachFileIcon)}
+     *             instead.
+     * @param contacts the list of remote contact Identifiers
+     * @param file Uri of file to transfer
+     * @param attachFileIcon File icon option. If true, the stack tries to attach fileicon. Fileicon
+     *            may not be attached if file is not an image or if local or remote contact does not
+     *            support fileicon.
+     * @return FileTransfer
+     * @throws RcsPersistentStorageException
+     * @throws RcsServiceNotAvailableException
+     * @throws RcsGenericException
+     */
+    @Deprecated
+    public FileTransfer transferFileToMany(Set<ContactId> contacts, Uri file, boolean attachFileIcon)
+            throws RcsPersistentStorageException, RcsServiceNotAvailableException,
+            RcsGenericException {
+        return transferFileToMany(contacts, file, Disposition.ATTACH, attachFileIcon);
+    }
+
+    /**
+     * Transfers a file to a list of contacts. The parameter file contains the URI of the file to be
+     * transferred (for a local or a remote file). The parameter contact supports the following
+     * formats: MSISDN in national or international format, SIP address, SIP-URI or Tel-URI. If the
+     * format of the contact is not supported an exception is thrown.
+     *
+     * @param contacts the list of remote contact Identifiers
+     * @param file Uri of file to transfer
+     * @param disposition File disposition
+     * @param attachFileIcon File icon option. If true, the stack tries to attach fileicon. Fileicon
+     *            may not be attached if file is not an image or if local or remote contact does not
+     *            support fileicon.
+     * @return FileTransfer
+     * @throws RcsPersistentStorageException
+     * @throws RcsServiceNotAvailableException
+     * @throws RcsGenericException
+     */
+    public FileTransfer transferFileToMany(Set<ContactId> contacts, Uri file,
+            Disposition disposition, boolean attachFileIcon) throws RcsPersistentStorageException,
+            RcsServiceNotAvailableException, RcsGenericException {
+        if (mApi == null) {
+            throw new RcsServiceNotAvailableException();
+        }
+        try {
+            /* Only grant permission for content Uris */
+            tryToGrantUriPermissionToStackServices(file);
+            IFileTransfer ftIntf = mApi.transferFileToMany2(new ArrayList<>(contacts), file,
+                    disposition.toInt(), attachFileIcon);
+            if (ftIntf != null) {
+                return new FileTransfer(ftIntf);
+            }
+            return null;
+
+        } catch (Exception e) {
+            RcsIllegalArgumentException.assertException(e);
+            RcsPersistentStorageException.assertException(e);
+            throw new RcsGenericException(e);
+        }
+    }
+
+    /**
      * Returns true if it is possible to initiate file transfer to the group chat specified by the
      * chatId parameter, else returns false.
      * 
@@ -481,6 +576,60 @@ public final class FileTransferService extends RcsService {
     }
 
     /**
+     * Adds a listener on one-to-many file transfer events
+     *
+     * @param listener File transfer listener
+     * @throws RcsServiceNotAvailableException
+     * @throws RcsGenericException
+     */
+    public void addEventListener(OneToManyFileTransferListener listener)
+            throws RcsServiceNotAvailableException, RcsGenericException {
+        if (listener == null) {
+            throw new RcsIllegalArgumentException("listener must not be null!");
+        }
+        if (mApi == null) {
+            throw new RcsServiceNotAvailableException();
+        }
+        try {
+            IOneToManyFileTransferListener rcsListener = new OneToManyFileTransferListenerImpl(
+                    listener);
+            mOneToManyFileTransferListeners.put(listener, new WeakReference<>(rcsListener));
+            mApi.addEventListener4(rcsListener);
+        } catch (Exception e) {
+            RcsIllegalArgumentException.assertException(e);
+            throw new RcsGenericException(e);
+        }
+    }
+
+    /**
+     * Removes a listener on one-to-many file transfer events
+     *
+     * @param listener File transfer listener
+     * @throws RcsServiceNotAvailableException
+     * @throws RcsGenericException
+     */
+    public void removeEventListener(OneToManyFileTransferListener listener)
+            throws RcsServiceNotAvailableException, RcsGenericException {
+        if (mApi == null) {
+            throw new RcsServiceNotAvailableException();
+        }
+        try {
+            WeakReference<IOneToManyFileTransferListener> weakRef = mOneToManyFileTransferListeners
+                    .remove(listener);
+            if (weakRef == null) {
+                return;
+            }
+            IOneToManyFileTransferListener rcsListener = weakRef.get();
+            if (rcsListener != null) {
+                mApi.removeEventListener4(rcsListener);
+            }
+        } catch (Exception e) {
+            RcsIllegalArgumentException.assertException(e);
+            throw new RcsGenericException(e);
+        }
+    }
+
+    /**
      * Adds a listener on group file transfer events
      * 
      * @param listener Group file transfer listener
@@ -553,6 +702,25 @@ public final class FileTransferService extends RcsService {
     }
 
     /**
+     * Deletes all one-to-many file transfer from history and abort/reject any associated ongoing
+     * session if such exists.
+     *
+     * @throws RcsServiceNotAvailableException
+     * @throws RcsGenericException
+     */
+    public void deleteOneToManyFileTransfers() throws RcsServiceNotAvailableException,
+            RcsGenericException {
+        if (mApi == null) {
+            throw new RcsServiceNotAvailableException();
+        }
+        try {
+            mApi.deleteOneToManyFileTransfers();
+        } catch (Exception e) {
+            throw new RcsGenericException(e);
+        }
+    }
+
+    /**
      * Deletes all group file transfer from history and abort/reject any associated ongoing session
      * if such exists.
      * 
@@ -586,6 +754,27 @@ public final class FileTransferService extends RcsService {
         }
         try {
             mApi.deleteOneToOneFileTransfers2(contact);
+        } catch (Exception e) {
+            RcsIllegalArgumentException.assertException(e);
+            throw new RcsGenericException(e);
+        }
+    }
+
+    /**
+     * Deletes file transfer corresponding to a given one-to-many chat specified by chat id from
+     * history and abort/reject any associated ongoing session if such exists.
+     *
+     * @param chatId the chat ID
+     * @throws RcsServiceNotAvailableException
+     * @throws RcsGenericException
+     */
+    public void deleteOneToManyFileTransfers(String chatId) throws RcsServiceNotAvailableException,
+            RcsGenericException {
+        if (mApi == null) {
+            throw new RcsServiceNotAvailableException();
+        }
+        try {
+            mApi.deleteOneToManyFileTransfers2(chatId);
         } catch (Exception e) {
             RcsIllegalArgumentException.assertException(e);
             throw new RcsGenericException(e);

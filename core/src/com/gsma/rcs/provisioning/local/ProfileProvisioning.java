@@ -50,7 +50,8 @@ public class ProfileProvisioning extends Fragment implements IProvisioningFragme
      * IMS authentication for mobile access
      */
     private static final String[] MOBILE_IMS_AUTHENT = {
-            AuthenticationProcedure.GIBA.name(), AuthenticationProcedure.DIGEST.name()
+            AuthenticationProcedure.GIBA.name(), AuthenticationProcedure.DIGEST.name(),
+            AuthenticationProcedure.AKA.name()
     };
 
     private static RcsSettings sRcsSettings;
@@ -95,6 +96,7 @@ public class ProfileProvisioning extends Fragment implements IProvisioningFragme
         mHelper.setContactIdEditText(R.id.ImsUsername, RcsSettingsData.USERPROFILE_IMS_USERNAME);
         mHelper.setStringEditText(R.id.ImsDisplayName, RcsSettingsData.USERPROFILE_IMS_DISPLAY_NAME);
         mHelper.setStringEditText(R.id.ImsHomeDomain, RcsSettingsData.USERPROFILE_IMS_HOME_DOMAIN);
+        mHelper.setStringEditText(R.id.ImsPublicIdPc, RcsSettingsData.USERPROFILE_IMS_PUBLIC_ID_PC);
         mHelper.setStringEditText(R.id.ImsPrivateId, RcsSettingsData.USERPROFILE_IMS_PRIVATE_ID);
         mHelper.setStringEditText(R.id.ImsPassword, RcsSettingsData.USERPROFILE_IMS_PASSWORD);
         mHelper.setStringEditText(R.id.ImsRealm, RcsSettingsData.USERPROFILE_IMS_REALM);
@@ -112,8 +114,15 @@ public class ProfileProvisioning extends Fragment implements IProvisioningFragme
         mHelper.setUriEditText(R.id.FtHttpServerAddr, RcsSettingsData.FT_HTTP_SERVER);
         mHelper.setStringEditText(R.id.FtHttpServerLogin, RcsSettingsData.FT_HTTP_LOGIN);
         mHelper.setStringEditText(R.id.FtHttpServerPassword, RcsSettingsData.FT_HTTP_PASSWORD);
+        mHelper.setUriEditText(R.id.ImMassUri, RcsSettingsData.IM_MASS_URI);
         mHelper.setUriEditText(R.id.ImConferenceUri, RcsSettingsData.IM_CONF_URI);
         mHelper.setUriEditText(R.id.EndUserConfReqUri, RcsSettingsData.ENDUSER_CONFIRMATION_URI);
+        mHelper.setUriEditText(R.id.MsgStoreServerAddr, RcsSettingsData.MSG_STORE_SERVER);
+        mHelper.setUriEditText(R.id.ProfileServerAddr, RcsSettingsData.PROFILE_SERVER);
+        mHelper.setUriEditText(R.id.PublicAccountServerAddr, RcsSettingsData.PUBLICACCOUNT_SERVER);
+        mHelper.setUriEditText(R.id.SsoServerAddr, RcsSettingsData.SSO_SERVER);
+        mHelper.setUriEditText(R.id.QrcardServerAddr, RcsSettingsData.QRCARD_SERVER);
+        mHelper.setUriEditText(R.id.PcApplicationServerAddr, RcsSettingsData.PC_APPLICATION_SERVER);
         mHelper.setStringEditText(R.id.RcsApn, RcsSettingsData.RCS_APN);
 
         TextView txt = (TextView) mRootView.findViewById(R.id.release);
@@ -145,6 +154,7 @@ public class ProfileProvisioning extends Fragment implements IProvisioningFragme
         mHelper.saveStringEditText(R.id.ImsDisplayName,
                 RcsSettingsData.USERPROFILE_IMS_DISPLAY_NAME);
         mHelper.saveStringEditText(R.id.ImsHomeDomain, RcsSettingsData.USERPROFILE_IMS_HOME_DOMAIN);
+        mHelper.saveStringEditText(R.id.ImsPublicIdPc, RcsSettingsData.USERPROFILE_IMS_PUBLIC_ID_PC);
         mHelper.saveStringEditText(R.id.ImsPrivateId, RcsSettingsData.USERPROFILE_IMS_PRIVATE_ID);
         mHelper.saveStringEditText(R.id.ImsPassword, RcsSettingsData.USERPROFILE_IMS_PASSWORD);
         mHelper.saveStringEditText(R.id.ImsRealm, RcsSettingsData.USERPROFILE_IMS_REALM);
@@ -167,8 +177,15 @@ public class ProfileProvisioning extends Fragment implements IProvisioningFragme
                 && sRcsSettings.getFtHttpLogin() != null
                 && sRcsSettings.getFtHttpPassword() != null);
 
+        mHelper.saveUriEditText(R.id.ImMassUri, RcsSettingsData.IM_MASS_URI);
         mHelper.saveUriEditText(R.id.ImConferenceUri, RcsSettingsData.IM_CONF_URI);
         mHelper.saveUriEditText(R.id.EndUserConfReqUri, RcsSettingsData.ENDUSER_CONFIRMATION_URI);
+        mHelper.saveUriEditText(R.id.MsgStoreServerAddr, RcsSettingsData.MSG_STORE_SERVER);
+        mHelper.saveUriEditText(R.id.ProfileServerAddr, RcsSettingsData.PROFILE_SERVER);
+        mHelper.saveUriEditText(R.id.PublicAccountServerAddr, RcsSettingsData.PUBLICACCOUNT_SERVER);
+        mHelper.saveUriEditText(R.id.SsoServerAddr, RcsSettingsData.SSO_SERVER);
+        mHelper.saveUriEditText(R.id.QrcardServerAddr, RcsSettingsData.QRCARD_SERVER);
+        mHelper.saveUriEditText(R.id.PcApplicationServerAddr, RcsSettingsData.PC_APPLICATION_SERVER);
         mHelper.saveStringEditText(R.id.RcsApn, RcsSettingsData.RCS_APN);
     }
 

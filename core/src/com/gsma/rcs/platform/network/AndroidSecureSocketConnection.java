@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2015 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,6 +155,12 @@ public class AndroidSecureSocketConnection extends AndroidSocketConnection {
                                     + " is used while " + announcedFingerprintElements[1]
                                     + " is expected!");
                         }
+                        // FIXME. Skip over the fingerprint verify in cmcc.
+                        // All received fingerprints are not equal to the expected one which has
+                        // been presented in the sdp.
+                        if (mRcsSettings.isCmccRelease()) {
+                            return;
+                        }
                         /* Close the socket as an attack is assumed */
                         CloseableUtils.tryToClose(socket);
                         return;
@@ -162,13 +169,11 @@ public class AndroidSecureSocketConnection extends AndroidSocketConnection {
             }
             setSocket(socket);
         } catch (IOException e) {
+            CloseableUtils.tryToClose(socket);
             throw new NetworkException(new StringBuilder(
                     "Failed to open socket connection for address : ").append(remoteAddr)
                     .append("and port : ").append(remotePort).toString(), e);
-        } finally {
-            CloseableUtils.tryToClose(socket);
         }
-
     }
 
     /**

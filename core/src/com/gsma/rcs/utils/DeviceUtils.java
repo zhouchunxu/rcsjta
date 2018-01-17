@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +29,6 @@ import com.gsma.rcs.provider.settings.RcsSettings;
 
 import android.content.Context;
 import android.os.Build;
-import android.telephony.TelephonyManager;
 
 import java.util.UUID;
 
@@ -93,10 +93,8 @@ public class DeviceUtils {
      */
     private static String getImei(Context ctx) {
         if (sImei == null) {
-            final TelephonyManager telephonyManager = (TelephonyManager) ctx
-                    .getSystemService(Context.TELEPHONY_SERVICE);
-            sImei = telephonyManager.getDeviceId();
-            if (sImei == null) {
+            sImei = TelephonyUtils.getDeviceId();
+            if (StringUtils.isEmpty(sImei)) {
                 return null;
             }
             /**

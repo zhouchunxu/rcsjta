@@ -2,6 +2,7 @@
  * Software Name : RCS IMS Stack
  *
  * Copyright (C) 2010-2016 Orange.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +39,7 @@ public class Capabilities {
     private final boolean mVideoSharing;
     private final boolean mIpVoiceCall;
     private final boolean mIpVideoCall;
+    private final boolean mStandaloneMessaging;
     private final boolean mImSession;
     private final boolean mFileTransferMsrp;
     private final boolean mCsVideo;
@@ -79,6 +81,7 @@ public class Capabilities {
         mVideoSharing = builder.mVideoSharing;
         mIpVoiceCall = builder.mIpVoiceCall;
         mIpVideoCall = builder.mIpVideoCall;
+        mStandaloneMessaging = builder.mStandaloneMessaging;
         mImSession = builder.mImSession;
         mFileTransferMsrp = builder.mFileTransferMsrp;
         mCsVideo = builder.mCsVideo;
@@ -129,6 +132,15 @@ public class Capabilities {
      */
     public boolean isIPVideoCallSupported() {
         return mIpVideoCall;
+    }
+
+    /**
+     * Is Standalone messaging supported
+     * 
+     * @return Boolean
+     */
+    public boolean isStandaloneMessagingSupported() {
+        return mStandaloneMessaging;
     }
 
     /**
@@ -254,6 +266,7 @@ public class Capabilities {
         return "Caps{" +
                 "ImageShare=" + mImageSharing +
                 ", VideoSharing=" + mVideoSharing +
+                ", StandaloneMessaging=" + mStandaloneMessaging +
                 ", IM=" + mImSession +
                 ", FtMsrp=" + mFileTransferMsrp +
                 ", FtHttp=" + mFileTransferHttp +
@@ -297,6 +310,8 @@ public class Capabilities {
             return false;
         if (mGroupChatStoreForward != other.mGroupChatStoreForward)
             return false;
+        if (mStandaloneMessaging != other.mStandaloneMessaging)
+            return false;
         if (mImSession != other.mImSession)
             return false;
         if (mImageSharing != other.mImageSharing)
@@ -326,6 +341,7 @@ public class Capabilities {
         result = prime * result + (mFileTransferThumbnail ? 1231 : 1237);
         result = prime * result + (mGeolocationPush ? 1231 : 1237);
         result = prime * result + (mGroupChatStoreForward ? 1231 : 1237);
+        result = prime * result + (mStandaloneMessaging ? 1231 : 1237);
         result = prime * result + (mImSession ? 1231 : 1237);
         result = prime * result + (mImageSharing ? 1231 : 1237);
         result = prime * result + (mIpVideoCall ? 1231 : 1237);
@@ -354,6 +370,7 @@ public class Capabilities {
         private boolean mVideoSharing = false;
         private boolean mIpVoiceCall = false;
         private boolean mIpVideoCall = false;
+        private boolean mStandaloneMessaging = false;
         private boolean mImSession = false;
         private boolean mFileTransferMsrp = false;
         private boolean mCsVideo = false;
@@ -385,6 +402,7 @@ public class Capabilities {
             mVideoSharing = capabilities.isVideoSharingSupported();
             mIpVoiceCall = capabilities.isIPVoiceCallSupported();
             mIpVideoCall = capabilities.isIPVideoCallSupported();
+            mStandaloneMessaging = capabilities.isStandaloneMessagingSupported();
             mImSession = capabilities.isImSessionSupported();
             mFileTransferMsrp = capabilities.isFileTransferMsrpSupported();
             mCsVideo = capabilities.isCsVideoSupported();
@@ -479,6 +497,26 @@ public class Capabilities {
          */
         public boolean isIPVideoCallSupported() {
             return mIpVideoCall;
+        }
+
+        /**
+         * Sets Standalone Messaging support
+         * 
+         * @param support the Standalone messaging support
+         * @return the current instance
+         */
+        public CapabilitiesBuilder setStandaloneMessaging(boolean support) {
+            mStandaloneMessaging = support;
+            return this;
+        }
+
+        /**
+         * Is Standalone Messaging supported
+         * 
+         * @return Boolean
+         */
+        public boolean isStandaloneMessagingSupported() {
+            return mStandaloneMessaging;
         }
 
         /**

@@ -2,6 +2,7 @@
  * Software Name : RCS IMS Stack
  *
  * Copyright (C) 2010-2016 Orange.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +43,14 @@ public class FifoBuffer {
      * @param obj Message
      */
     public synchronized void addObject(Object obj) {
+        // Avoid OOM caused by too many objects
+        if (nbObjects >= 100) {
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                /* Nothing to be done here */
+            }
+        }
         fifo.addElement(obj);
         nbObjects++;
         notifyAll();

@@ -25,6 +25,7 @@
     <string name="IMS_username">IMS username:</string>
     <string name="IMS_display_name">IMS display name:</string>
     <string name="IMS_home_domain">IMS home domain:</string>
+    <string name="IMS_public_URI_for_PC">IMS public URI for PC:</string>
     <string name="IMS_private_URI_for_HTTP_Digest">IMS private URI for HTTP Digest:</string>
     <string name="IMS_password_for_HTTP_Digest">IMS password for HTTP Digest:</string>
     <string name="IMS_realm_for_HTTP_Digest">IMS realm for HTTP Digest:</string>
@@ -38,13 +39,21 @@
     <string name="FT_HTTP_server_address">FT HTTP server address:</string>
     <string name="FT_HTTP_server_login">FT HTTP server login:</string>
     <string name="FT_HTTP_server_password">FT HTTP server password:</string>
+    <string name="IM_mass_URI">IM mass URI:</string>
     <string name="IM_conference_URI">IM conference URI:</string>
     <string name="End_user_confirmation_URI">End user confirmation URI:</string>
+    <string name="Msg_store_server_address">Message store server address:</string>
+    <string name="Profile_server_address">Profile server address:</string>
+    <string name="Public_account_server_address">Public account server address:</string>
+    <string name="SSO_server_address">SSO server address:</string>
+    <string name="Qrcard_server_address">Qrcard server address:</string>
+    <string name="PC_application_server_address">PC application server address:</string>
     <string name="APN">APN:</string>
     <string name="Image_sharing">Image sharing</string>
     <string name="Video_sharing">Video sharing</string>
     <string name="File_transfer_MSRP">File transfer MSRP</string>
     <string name="File_transfer_HTTP">File transfer HTTP</string>
+    <string name="Standalone_messaging">Standalone messaging</string>
     <string name="IM_session">IM session</string>
     <string name="IM_Group_session">IM Group session</string>
     <string name="IP_Voice_call">IP Voice call</string>
@@ -62,9 +71,11 @@
     <string name="shared_sketch">Shared sketch</string>
     <string name="post_call">Post call</string>
     <!-- rcs_provisioning_service.xml -->
+    <string name="Max_standalone_message_size">Max standalone message size:</string>
     <string name="Max_photo_icon_size">Max photo-icon size:</string>
     <string name="Max_length_of_the_freetext">Max length of the freetext:</string>
     <string name="Max_number_of_participants_in_a_group_chat">Max number of participants in a group chat:</string>
+    <string name="Max_length_of_a_standalone_message">Max length of a standalone message:</string>
     <string name="Max_length_of_a_chat_message">Max length of a chat message:</string>
     <string name="Max_length_of_a_group_chat_message">Max length of a group chat message:</string>
     <string name="Idle_duration_of_a_chat_session_milliseconds">Idle duration of a chat session (milliseconds):</string>

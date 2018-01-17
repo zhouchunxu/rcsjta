@@ -22,6 +22,9 @@
 
 package com.gsma.rcs.core.content;
 
+import com.gsma.rcs.platform.AndroidFactory;
+import com.gsma.rcs.utils.FileUtils;
+
 import android.net.Uri;
 
 /**
@@ -60,6 +63,9 @@ public class VideoContent extends MmContent {
      */
     public VideoContent(Uri videoFile, String encoding, long size, String fileName) {
         super(videoFile, encoding, size, fileName);
+        long duration = FileUtils.getDurationFromFile(AndroidFactory.getApplicationContext(),
+                videoFile);
+        setTimelen(duration);
     }
 
     /**

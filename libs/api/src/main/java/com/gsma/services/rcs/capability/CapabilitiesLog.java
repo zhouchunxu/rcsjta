@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,6 +96,14 @@ public class CapabilitiesLog {
      * </P>
      */
     public static final String CAPABILITY_IM_SESSION = "capability_im_session";
+
+    /**
+     * The name of the column containing the standalone messaging capability.
+     * <P>
+     * Type: INTEGER
+     * </P>
+     */
+    public static final String CAPABILITY_STANDALONE_MESSAGING = "standalone_messaging";
 
     /**
      * The name of the column containing the geoloc push capability.

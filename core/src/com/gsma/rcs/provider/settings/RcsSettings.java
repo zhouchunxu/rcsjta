@@ -3,6 +3,7 @@
  * <p/>
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,6 +77,11 @@ public class RcsSettings {
      * The maximum length of the Group Chat subject
      */
     private static final int GROUP_CHAT_SUBJECT_MAX_LENGTH = 50;
+
+    /**
+     * The maximum length of the alias displayed in Group Chat
+     */
+    private static final int GROUP_CHAT_ALIAS_MAX_LENGTH = 30;
 
     private static final String WHERE_CLAUSE = RcsSettingsData.KEY_KEY + "=?";
 
@@ -453,6 +459,24 @@ public class RcsSettings {
     }
 
     /**
+     * Get user profile IMS public Id of PC (i.e. IMPU of PC)
+     *
+     * @return SIP-URI
+     */
+    public String getUserProfileImsPublicIdPc() {
+        return readString(RcsSettingsData.USERPROFILE_IMS_PUBLIC_ID_PC);
+    }
+
+    /**
+     * Set user profile IMS public Id of PC (i.e. IMPU of PC)
+     *
+     * @param uri SIP-URI
+     */
+    public void setUserProfileImsPublicIdPc(String uri) {
+        writeString(RcsSettingsData.USERPROFILE_IMS_PUBLIC_ID_PC, uri);
+    }
+
+    /**
      * Get user profile IMS private Id (i.e. IMPI)
      *
      * @return SIP-URI
@@ -724,6 +748,24 @@ public class RcsSettings {
     }
 
     /**
+     * Get IM mass URI
+     *
+     * @return SIP-URI
+     */
+    public Uri getImMassUri() {
+        return readUri(RcsSettingsData.IM_MASS_URI);
+    }
+
+    /**
+     * Set IM mass URI
+     *
+     * @param uri SIP-URI
+     */
+    public void setImMassUri(Uri uri) {
+        writeUri(RcsSettingsData.IM_MASS_URI, uri);
+    }
+
+    /**
      * Get IM conference URI
      *
      * @return SIP-URI
@@ -760,6 +802,116 @@ public class RcsSettings {
     }
 
     /**
+     * Get message store server address
+     *
+     * @return Address as <host>:<port>
+     */
+    public Uri getMsgStoreServer() {
+        return readUri(RcsSettingsData.MSG_STORE_SERVER);
+    }
+
+    /**
+     * Set message store server address
+     *
+     * @param addr Address as <host>:<port>
+     */
+    public void setMsgStoreServer(Uri addr) {
+        writeUri(RcsSettingsData.MSG_STORE_SERVER, addr);
+    }
+
+    /**
+     * Get profile server address
+     *
+     * @return Address as <host>:<port>
+     */
+    public Uri getProfileServer() {
+        return readUri(RcsSettingsData.PROFILE_SERVER);
+    }
+
+    /**
+     * Set profile server address
+     *
+     * @param addr Address as <host>:<port>
+     */
+    public void setProfileServer(Uri addr) {
+        writeUri(RcsSettingsData.PROFILE_SERVER, addr);
+    }
+
+    /**
+     * Get public account server address
+     *
+     * @return Address as <host>:<port>
+     */
+    public Uri getPublicAccountServer() {
+        return readUri(RcsSettingsData.PUBLICACCOUNT_SERVER);
+    }
+
+    /**
+     * Set public account server address
+     *
+     * @param addr Address as <host>:<port>
+     */
+    public void setPublicAccountServer(Uri addr) {
+        writeUri(RcsSettingsData.PUBLICACCOUNT_SERVER, addr);
+    }
+
+    /**
+     * Get SSO server address
+     *
+     * @return Address as <host>:<port>
+     */
+    public Uri getSsoServer() {
+        return readUri(RcsSettingsData.SSO_SERVER);
+    }
+
+    /**
+     * Set SSO server address
+     *
+     * @param addr Address as <host>:<port>
+     */
+    public void setSsoServer(Uri addr) {
+        writeUri(RcsSettingsData.SSO_SERVER, addr);
+    }
+
+
+    /**
+     * Get qrcard server address
+     *
+     * @return Address as <host>:<port>
+     */
+    public Uri getQrcardServer() {
+        return readUri(RcsSettingsData.QRCARD_SERVER);
+    }
+
+    /**
+     * Set qrcard server address
+     *
+     * @param addr Address as <host>:<port>
+     */
+    public void setQrcardServer(Uri addr) {
+        writeUri(RcsSettingsData.QRCARD_SERVER, addr);
+    }
+
+
+    /**
+     * Get pc application server address
+     *
+     * @return Address as <host>:<port>
+     */
+    public Uri getPcApplicationServer() {
+        return readUri(RcsSettingsData.PC_APPLICATION_SERVER);
+    }
+
+    /**
+     * Set pc application server address
+     *
+     * @param addr Address as <host>:<port>
+     */
+    public void setPcApplicationServer(Uri addr) {
+        writeUri(RcsSettingsData.PC_APPLICATION_SERVER, addr);
+    }
+
+    /**
      * Get my capabilities
      *
      * @return capability
@@ -772,6 +924,7 @@ public class RcsSettings {
         capaBuilder.setFileTransferMsrp(isFileTransferSupported());
         capaBuilder.setFileTransferHttp(isFileTransferHttpSupported());
         capaBuilder.setImageSharing(isImageSharingSupported());
+        capaBuilder.setStandaloneMessaging(isStandaloneMessagingSupported());
         capaBuilder.setImSession(isImSessionSupported());
         capaBuilder.setPresenceDiscovery(isPresenceDiscoverySupported());
         capaBuilder.setSocialPresence(isSocialPresenceSupported());
@@ -822,6 +975,15 @@ public class RcsSettings {
      */
     public int getMinGroupChatParticipants() {
         return MINIMUM_GC_PARTICIPANTS;
+    }
+
+    /**
+     * Gets max length of a standalone message
+     *
+     * @return Number of char
+     */
+    public int getMaxStandaloneMsgLength() {
+        return readInteger(RcsSettingsData.MAX_STANDALONE_MSG_LENGTH);
     }
 
     /**
@@ -1353,12 +1515,30 @@ public class RcsSettings {
     }
 
     /**
+     * Is standalone messaging supported
+     *
+     * @return Boolean
+     */
+    public boolean isStandaloneMessagingSupported() {
+        return readBoolean(RcsSettingsData.CAPABILITY_STANDALONE_MESSAGING);
+    }
+
+    /**
      * Is IM session supported
      *
      * @return Boolean
      */
     public boolean isImSessionSupported() {
         return readBoolean(RcsSettingsData.CAPABILITY_IM_SESSION);
+    }
+
+    /**
+     * Is IM group session supported
+     *
+     * @return Boolean
+     */
+    public boolean isImGroupSessionSupported() {
+        return readBoolean(RcsSettingsData.CAPABILITY_IM_GROUP_SESSION);
     }
 
     /**
@@ -1413,9 +1593,10 @@ public class RcsSettings {
      */
     public boolean isFileTransferThumbnailSupported() {
         // Thumbnail is only supported in HTPP.
-        // The thThumbnail configuration settings is fixed 0 for MSRP per specification.
+        // The thumbnail configuration settings is fixed 0 for MSRP per specification.
         // Refer to PDD v3 page 106.
-        return isFileTransferHttpSupported();
+        // return isFileTransferHttpSupported()
+        return readBoolean(RcsSettingsData.CAPABILITY_FILE_TRANSFER_THUMBNAIL);
     }
 
     /**
@@ -1755,6 +1936,7 @@ public class RcsSettings {
         }
         AuthenticationProcedure mode = getImsAuthenticationProcedureForMobile();
         switch (mode) {
+            case AKA:
             case DIGEST:
                 if (getUserProfileImsUserName() == null) {
                     return false;
@@ -1845,6 +2027,10 @@ public class RcsSettings {
 
     public void setImMsgTech(ImMsgTech mode) {
         writeInteger(RcsSettingsData.IM_MSG_TECH, mode.toInt());
+    }
+
+    public boolean isCpmMsgTech() {
+        return ImMsgTech.CPM.equals(getImMsgTech());
     }
 
     public boolean isFirstMessageInInvite() {
@@ -1950,6 +2136,15 @@ public class RcsSettings {
      */
     public boolean isAlbatrosRelease() {
         return (GsmaRelease.ALBATROS.equals(getGsmaRelease()));
+    }
+
+    /**
+     * Is China mobile release
+     *
+     * @return Boolean
+     */
+    public boolean isCmccRelease() {
+        return (GsmaRelease.CHINA_MOBILE.equals(getGsmaRelease()));
     }
 
     /**

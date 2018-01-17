@@ -2,6 +2,7 @@
  * Software Name : RCS IMS Stack
  *
  * Copyright (C) 2010-2016 Orange.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,9 +51,20 @@ public class CpimMessage {
     public static final String HEADER_TO = "To";
 
     /**
+     * Header "cc". Specifies a non-primary recipient ("courtesy copy") for a message
+     */
+    public static final String HEADER_CC = "cc";
+
+    /**
      * Header "DateTime"
      */
     public static final String HEADER_DATETIME = "DateTime";
+
+    /**
+     * Header "Silence" of CMCC extend
+     */
+    @Deprecated
+    public static final String HEADER_SILENCE_SUPPORTED = "CMCCfeature.silenceSupported";
 
     /**
      * Header "NS"
@@ -68,6 +80,11 @@ public class CpimMessage {
      * Header "Content-Disposition"
      */
     public static final String HEADER_CONTENT_DISPOSITION = "Content-Disposition";
+
+    /**
+     * Header "Content-Transfer-Encoding"
+     */
+    public static final String HEADER_CONTENT_TRANSFER_ENCODING = "Content-Transfer-Encoding";
 
     /**
      * Message content
@@ -152,4 +169,60 @@ public class CpimMessage {
         }
         return 0;
     }
+
+    @Deprecated
+    public boolean isSilence() {
+        String header = getHeader(CpimMessage.HEADER_NS);
+        if (header != null && header.equals("CMCCfeature<urn: CMCCFeatures@rcs.chinamobile.com>")) {
+            header = getHeader(CpimMessage.HEADER_SILENCE_SUPPORTED);
+            if (header != null && header.equals("true")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns message id
+     *
+     * @return message id in payload
+     */
+    public long getMessageId() {
+        String header = getHeader(CpimMessage.HEADER_FROM);
+        if (header != null) {
+            return DateUtils.decodeDate(header);
+        }
+        return 0;
+    }
+
+    /**
+     * Cpim message builder class
+     */
+    public static class CpimMessageBuilder {
+        //TODO
+        private String mFrom = null;
+        private String mTo = null;
+        private String mCc = null;
+
+        /**
+         * Default constructor
+         */
+        public CpimMessageBuilder() {
+
+        }
+
+        /**
+         * Copy constructor
+         *
+         * @param cpim to copy or null if construct with default values
+         */
+        public CpimMessageBuilder(CpimMessage cpim) {
+
+        }
+
+        public String build() {
+            return "";
+        }
+    }
+
 }

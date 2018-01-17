@@ -57,10 +57,22 @@ public class MessageData {
     /* package private */static final String KEY_CHAT_ID = ChatLog.Message.CHAT_ID;
 
     /**
-     * ContactId formatted number of remote contact or null if the message is an outgoing group chat
-     * message.
+     * Conversation Id. Conversation id can't be the unique id when the race condition happened in
+     * 1-2-1, use chat id as the unique key.
+     */
+    /* package private */static final String KEY_CONVERSATION_ID = ChatLog.Message.CONVERSATION_ID;
+
+    /**
+     * ContactId formatted number list of remote contacts with semicolon separated or null if the
+     * message is an outgoing group chat message.
      */
     /* package private */static final String KEY_CONTACT = ChatLog.Message.CONTACT;
+
+    /**
+     * ContactId formatted number list of courtesy copy contacts with semicolon separated in a chat
+     * message.
+     */
+    /* package private */static final String KEY_COURTESY_COPY = ChatLog.Message.COURTESY_COPY;
 
     /**
      * Id of the message
@@ -133,4 +145,19 @@ public class MessageData {
      * delivery expiration.
      */
     /* package private */static final String KEY_DELIVERY_EXPIRATION = "delivery_expiration";
+
+    /**
+     * Device type of the message sender. Values: 1 (PC).
+     */
+    /* package private */static final String KEY_DEVICE_TYPE = ChatLog.Message.DEVICE_TYPE;
+
+    /**
+     * If message should be silence to user. Values: 1 (true), 0 (false).
+     */
+    /* package private */static final String KEY_SILENCE = ChatLog.Message.SILENCE;
+
+    /**
+     * If message is in burn-after-reading cycle. Values: 1 (true), 0 (false).
+     */
+    /* package private */static final String KEY_BAR_CYCLE = ChatLog.Message.BAR_CYCLE;
 }

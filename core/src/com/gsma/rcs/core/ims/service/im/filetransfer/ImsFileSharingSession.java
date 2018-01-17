@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +25,10 @@ package com.gsma.rcs.core.ims.service.im.filetransfer;
 
 import com.gsma.rcs.core.content.MmContent;
 import com.gsma.rcs.core.ims.network.NetworkException;
+import com.gsma.rcs.core.ims.network.sip.FeatureTags;
+import com.gsma.rcs.core.ims.network.sip.Multipart;
 import com.gsma.rcs.core.ims.network.sip.SipMessageFactory;
+import com.gsma.rcs.core.ims.network.sip.SipUtils;
 import com.gsma.rcs.core.ims.protocol.PayloadException;
 import com.gsma.rcs.core.ims.protocol.msrp.MsrpSession;
 import com.gsma.rcs.core.ims.protocol.sip.SipDialogPath;
@@ -37,12 +41,17 @@ import com.gsma.rcs.core.ims.service.im.chat.ChatUtils;
 import com.gsma.rcs.provider.contact.ContactManager;
 import com.gsma.rcs.provider.messaging.FileTransferData;
 import com.gsma.rcs.provider.settings.RcsSettings;
-import com.gsma.rcs.utils.PhoneUtils;
+import com.gsma.rcs.utils.FileUtils;
+import com.gsma.rcs.utils.StringUtils;
 import com.gsma.rcs.utils.logger.Logger;
+import com.gsma.services.rcs.chat.ChatLog;
 import com.gsma.services.rcs.contact.ContactId;
 
 import android.net.Uri;
+import android.text.TextUtils;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.text.ParseException;
 
 /**
@@ -54,12 +63,14 @@ public abstract class ImsFileSharingSession extends FileSharingSession {
     /**
      * Boundary tag
      */
-    private final static String BOUNDARY_TAG = "boundary1";
+    public final static String BOUNDARY_TAG = "boundary1";
 
     /**
      * Default SO_TIMEOUT value (in milliseconds)
      */
     public final static long DEFAULT_SO_TIMEOUT = 30000;
+
+    private long mTransferredSize = 0;
 
     /**
      * The logger
@@ -72,17 +83,18 @@ public abstract class ImsFileSharingSession extends FileSharingSession {
      * @param imService InstantMessagingService
      * @param content Content of file to be shared
      * @param contact Remote contact identifier
+     * @param remoteUri the remote contact URI
      * @param fileIcon Content of file icon
      * @param filetransferId File transfer Id
-     * @param rcsSettings
+     * @param rcsSettings RCS settings
      * @param timestamp Local timestamp for the session
      * @param contactManager
      */
     public ImsFileSharingSession(InstantMessagingService imService, MmContent content,
-            ContactId contact, MmContent fileIcon, String filetransferId, RcsSettings rcsSettings,
-            long timestamp, ContactManager contactManager) {
-        super(imService, content, contact, PhoneUtils.formatContactIdToUri(contact), fileIcon,
-                filetransferId, rcsSettings, timestamp, contactManager);
+            ContactId contact, Uri remoteUri, MmContent fileIcon, String filetransferId,
+            RcsSettings rcsSettings, long timestamp, ContactManager contactManager) {
+        super(imService, content, contact, remoteUri, fileIcon, filetransferId, rcsSettings,
+                timestamp, contactManager);
     }
 
     @Override
@@ -96,7 +108,7 @@ public abstract class ImsFileSharingSession extends FileSharingSession {
      * @return String
      */
     public String getFileTransferIdAttribute() {
-        return Long.toString(System.currentTimeMillis());
+        return getFileTransferId();
     }
 
     /**
@@ -105,8 +117,15 @@ public abstract class ImsFileSharingSession extends FileSharingSession {
      * @return String
      */
     public String getFileSelectorAttribute() {
-        return "name:\"" + getContent().getName() + "\"" + " type:" + getContent().getEncoding()
-                + " size:" + getContent().getSize();
+        String selector = "name:\"" + getContent().getName() + "\"" + " type:"
+                + getContent().getEncoding() + " size:" + getContent().getSize();
+        if (mRcsSettings.isCmccRelease()) {
+            String fingerprint = FileUtils.getFingerprintOfFile(getContent().getUri(), "SHA1");
+            if (!TextUtils.isEmpty(fingerprint)) {
+                selector += " hash:sha-1:" + fingerprint;
+            }
+        }
+        return selector;
     }
 
     /**
@@ -123,6 +142,33 @@ public abstract class ImsFileSharingSession extends FileSharingSession {
     }
 
     /**
+     * Returns the "file-range" attribute
+     *
+     * @return String
+     */
+    public String getFileRangeAttribute() {
+        return (mTransferredSize + 1) + "-" + getContent().getSize();
+    }
+
+    /**
+     * Get file transferred size
+     *
+     * @return transferred size
+     */
+    public long getFileTransferredSize() {
+        return mTransferredSize;
+    }
+
+    /**
+     * Set file transferred size
+     *
+     * @param size
+     */
+    public void setFileTransferredSize(long size) {
+        mTransferredSize = size;
+    }
+
+    /**
      * Create an INVITE request
      * 
      * @return the INVITE request
@@ -130,20 +176,28 @@ public abstract class ImsFileSharingSession extends FileSharingSession {
      */
     public SipRequest createInvite() throws PayloadException {
         try {
+            String[] featureTags = {
+                ChatUtils.getFeatureTagForFileTransfer(mRcsSettings)
+            };
             SipRequest invite;
             SipDialogPath dialogPath = getDialogPath();
-            if (getFileicon() != null) {
-                invite = SipMessageFactory.createMultipartInvite(dialogPath,
-                        InstantMessagingService.FT_FEATURE_TAGS, dialogPath.getLocalContent(),
+            String content = dialogPath.getLocalContent();
+            Multipart multi = new Multipart(content, BOUNDARY_TAG);
+            if (multi.isMultipart()) {
+                invite = SipMessageFactory.createMultipartInvite(dialogPath, featureTags, content,
                         BOUNDARY_TAG);
             } else {
-                invite = SipMessageFactory.createInvite(dialogPath,
-                        InstantMessagingService.FT_FEATURE_TAGS, dialogPath.getLocalContent());
+                invite = SipMessageFactory.createInvite(dialogPath, featureTags, content);
+            }
+            if (mRcsSettings.isCpmMsgTech()) {
+                invite.addHeader(SipUtils.HEADER_P_PREFERRED_SERVICE, URLDecoder.decode(
+                        FeatureTags.FEATURE_OMA_CPM_FILE_TRANSFER, StringUtils.UTF8_STR));
+                invite.addHeader(ChatUtils.HEADER_CONVERSATION_ID, getConversationID());
             }
             invite.addHeader(ChatUtils.HEADER_CONTRIBUTION_ID, getContributionID());
             return invite;
 
-        } catch (ParseException e) {
+        } catch (ParseException | UnsupportedEncodingException e) {
             throw new PayloadException("Failed to create invite request!", e);
         }
     }

@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -237,6 +238,64 @@ public class FileTransferLog {
      * </P>
      */
     public static final String FILEICON_EXPIRATION = "fileicon_expiration";
+
+    /**
+     * The name of the column containing the conversation ID of the file transfer.
+     * <P>
+     * Type: TEXT
+     * </P>
+     */
+    public static final String CONVERSATION_ID = "conversation_id";
+
+    /**
+     * The name of the column containing the contribution ID.
+     * <P>
+     * Type: TEXT
+     * </P>
+     */
+    public static final String CONTRIBUTION_ID = "contribution_id";
+
+    /**
+     * The name of the column containing the list of the MSISDNs of the non-primary
+     * ("courtesy copy") contacts.
+     * <P>
+     * Type: TEXT
+     * </P>
+     */
+    public static final String COURTESY_COPY = "courtesy_copy";
+
+    /**
+     * If this is a silence supported file. Values: 1 (true), 0 (false)
+     * <P>
+     * Type: INTEGER
+     * </P>
+     */
+    public static final String SILENCE = "silence";
+
+    /**
+     * The name of the column containing the remote device type of the file. Values: 1 (PC)
+     * <P>
+     * Type: INTEGER
+     * </P>
+     */
+    public static final String DEVICE_TYPE = "device_type";
+
+    /**
+     * If this is a burn-after-reading message. Values: 1 (true), 0 (false)
+     * <P>
+     * Type: INTEGER
+     * </P>
+     */
+    public static final String BAR_CYCLE = "bar_cycle";
+
+    /**
+     * The name of the column containing the duration of audio/video file (in milliseconds),
+     * presented in the file-disposition attr.
+     * <P>
+     * Type: INTEGER
+     * </P>
+     */
+    public static final String DURATION = "duration";
 
     /**
      * The value assigned if file or icon expiration is unknown

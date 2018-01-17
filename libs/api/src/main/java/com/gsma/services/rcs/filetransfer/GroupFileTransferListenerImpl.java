@@ -63,6 +63,7 @@ public class GroupFileTransferListenerImpl extends IGroupFileTransferListener.St
         mListener.onProgressUpdate(chatId, transferId, currentSize, totalSize);
     }
 
+    @Override
     public void onDeliveryInfoChanged(String chatId, ContactId contact, String transferId,
             int status, int reasonCode) {
         GroupDeliveryInfo.Status rcsStatus;

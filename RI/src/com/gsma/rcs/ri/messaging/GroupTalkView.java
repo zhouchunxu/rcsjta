@@ -52,7 +52,7 @@ import com.gsma.services.rcs.chat.ChatMessage;
 import com.gsma.services.rcs.chat.ChatService;
 import com.gsma.services.rcs.chat.ChatServiceConfiguration;
 import com.gsma.services.rcs.chat.GroupChat;
-import com.gsma.services.rcs.chat.GroupChat.ParticipantStatus;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.Participant.Status;
 import com.gsma.services.rcs.chat.GroupChatIntent;
 import com.gsma.services.rcs.chat.GroupChatListener;
 import com.gsma.services.rcs.contact.ContactId;
@@ -230,7 +230,7 @@ public class GroupTalkView extends RcsFragmentActivity implements
 
             @Override
             public void onParticipantStatusChanged(String chatId, ContactId contact,
-                    ParticipantStatus status) {
+                    Status status) {
                 if (LogUtils.isActive) {
                     Log.d(LOGTAG, "onParticipantStatusChanged chatId=" + chatId + " contact="
                             + contact + " status=" + status);
@@ -249,8 +249,8 @@ public class GroupTalkView extends RcsFragmentActivity implements
             }
 
             @Override
-            public void onStateChanged(String chatId, final GroupChat.State state,
-                    GroupChat.ReasonCode reasonCode) {
+            public void onStateChanged(String chatId, final ChatLog.GroupChat.State state,
+                    ChatLog.GroupChat.ReasonCode reasonCode) {
                 if (LogUtils.isActive) {
                     Log.d(LOGTAG, "onStateChanged chatId=" + chatId + " state=" + state
                             + " reason=" + reasonCode);
@@ -475,7 +475,7 @@ public class GroupTalkView extends RcsFragmentActivity implements
                         Log.d(LOGTAG, "New group chat for chatId " + mChatId + " state="
                                 + mGroupChat.getState());
                     }
-                    if (GroupChat.State.INVITED == mGroupChat.getState()) {
+                    if (ChatLog.GroupChat.State.INVITED == mGroupChat.getState()) {
                         displayAcceptRejectDialog(contact);
                     }
                     if (LogUtils.isActive) {
@@ -819,7 +819,7 @@ public class GroupTalkView extends RcsFragmentActivity implements
      * @param setOfParticipant a set of participant info
      * @return a set of contact
      */
-    private Set<String> getSetOfParticipants(Map<ContactId, ParticipantStatus> setOfParticipant) {
+    private Set<String> getSetOfParticipants(Map<ContactId, Status> setOfParticipant) {
         Set<String> result = new HashSet<>();
         if (setOfParticipant.size() != 0) {
             for (ContactId contact : setOfParticipant.keySet()) {

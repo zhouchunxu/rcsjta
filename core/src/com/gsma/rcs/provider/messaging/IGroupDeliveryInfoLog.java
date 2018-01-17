@@ -79,6 +79,14 @@ public interface IGroupDeliveryInfoLog {
     boolean isDisplayedByAllRecipients(String msgId);
 
     /**
+     * Check if all recipients have failed to receive message
+     *
+     * @param msgId Message ID
+     * @return true If there is no contact to receive message
+     */
+    boolean isFailedToAllRecipients(String msgId);
+
+    /**
      * Set delivery info status to delivered for outgoing group chat message or file
      * 
      * @param chatId Group chat ID

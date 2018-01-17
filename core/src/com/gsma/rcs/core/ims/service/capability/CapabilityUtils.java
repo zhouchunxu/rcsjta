@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2015 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +64,12 @@ public class CapabilityUtils {
         List<String> tags = new ArrayList<>();
         List<String> icsiTags = new ArrayList<>();
         List<String> iariTags = new ArrayList<>();
+
+        // Standalone messaging support
+        if (rcsSettings.isStandaloneMessagingSupported()) {
+            icsiTags.add(FeatureTags.FEATURE_OMA_CPM_MSG);
+            icsiTags.add(FeatureTags.FEATURE_OMA_CPM_LARGE_MSG);
+        }
         // Video share support
         if (rcsSettings.isVideoSharingSupported() && richcall
                 && (NetworkUtils.getNetworkAccessType() >= NetworkUtils.NETWORK_ACCESS_3G)) {
@@ -133,6 +140,14 @@ public class CapabilityUtils {
             }
             icsiTags.add(FeatureTags.FEATURE_3GPP_EXTENSION);
         }
+        // Custom features of cmcc support
+        if (rcsSettings.isCmccRelease()) {
+            // iariTags.add(FeatureTags.Cmcc.FEATURE_RCSE_EMOTICON);
+            // iariTags.add(FeatureTags.Cmcc.FEATURE_RCSE_CARD_MESSAGE);
+            // iariTags.add(FeatureTags.Cmcc.FEATURE_RCSE_GROUP_MANAGE);
+            // iariTags.add(FeatureTags.Cmcc.FEATURE_RCSE_PUBLIC_MESSAGE);
+            // iariTags.add(FeatureTags.Cmcc.FEATURE_RCSE_COMMON_EXTENSION);
+        }
         // Add IARI prefix
         if (!iariTags.isEmpty()) {
             tags.add(FeatureTags.FEATURE_RCSE + "=\"" + TextUtils.join(",", iariTags) + "\"");
@@ -175,6 +190,16 @@ public class CapabilityUtils {
             } else if (tag.contains(FeatureTags.FEATURE_OMA_IM)) {
                 /* Support both IM & FT services */
                 capaBuilder.setImSession(true).setFileTransferMsrp(true);
+
+            } else if (tag.contains(FeatureTags.FEATURE_OMA_CPM_MSG)
+                    && tag.contains(FeatureTags.FEATURE_OMA_CPM_LARGE_MSG)) {
+                capaBuilder.setStandaloneMessaging(true);
+
+            } else if (tag.contains(FeatureTags.FEATURE_OMA_CPM_SESSION)) {
+                capaBuilder.setImSession(true);
+
+            } else if (tag.contains(FeatureTags.FEATURE_OMA_CPM_FILE_TRANSFER)) {
+                capaBuilder.setFileTransferMsrp(true);
 
             } else if (tag.contains(FeatureTags.FEATURE_RCSE_PRESENCE_DISCOVERY)) {
                 capaBuilder.setPresenceDiscovery(true);

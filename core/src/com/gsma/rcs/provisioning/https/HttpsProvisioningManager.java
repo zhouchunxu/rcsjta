@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,17 +37,17 @@ import com.gsma.rcs.provider.settings.RcsSettingsData.GsmaRelease;
 import com.gsma.rcs.provider.settings.RcsSettingsData.TermsAndConditionsResponse;
 import com.gsma.rcs.provisioning.ProvisioningFailureReasons;
 import com.gsma.rcs.provisioning.ProvisioningInfo;
-import com.gsma.rcs.provisioning.ProvisioningInfo.Version;
 import com.gsma.rcs.provisioning.ProvisioningParser;
 import com.gsma.rcs.provisioning.TermsAndConditionsRequest;
+import com.gsma.rcs.provisioning.ProvisioningInfo.Version;
 import com.gsma.rcs.service.LauncherUtils;
 import com.gsma.rcs.utils.CloseableUtils;
 import com.gsma.rcs.utils.IntentUtils;
 import com.gsma.rcs.utils.NetworkUtils;
 import com.gsma.rcs.utils.StringUtils;
 import com.gsma.rcs.utils.logger.Logger;
-import com.gsma.services.rcs.CommonServiceConfiguration.MessagingMode;
 import com.gsma.services.rcs.RcsService;
+import com.gsma.services.rcs.CommonServiceConfiguration.MessagingMode;
 import com.gsma.services.rcs.contact.ContactId;
 
 import android.app.PendingIntent;
@@ -198,6 +199,11 @@ public class HttpsProvisioningManager {
      */
     private static Uri.Builder sHttpsReqUriBuilder;
 
+    /**
+     * Http cookie
+     */
+    private String mCookie;
+
     private static final Logger sLogger = Logger
             .getLogger(HttpsProvisioningManager.class.getName());
 
@@ -288,6 +294,9 @@ public class HttpsProvisioningManager {
         String protocol = (secured) ? "https" : "http";
         URL url = new URL(protocol + "://" + request);
         HttpURLConnection cnx = (HttpURLConnection) url.openConnection();
+        if (!TextUtils.isEmpty(mCookie)) {
+            cnx.setRequestProperty("Cookie",  mCookie);
+        }
         cnx.setRequestProperty("Accept-Language", HttpsProvisioningUtils.getUserLanguage());
         return cnx;
     }
@@ -377,7 +386,7 @@ public class HttpsProvisioningManager {
         HttpURLConnection urlConnection = null;
         try {
             /* Condition to check to show MSISDN popup after OTP time out */
-            if (msisdn != null && mRetryCount > 0 && mWaitingForOTP) {
+            if (msisdn == null && mRetryCount > 0 && mWaitingForOTP) {
                 mWaitingForOTP = false;
                 ContactId contact = mRcsSettings.getUserProfileImsUserName();
                 /* Displays a popup with previously given MSISDN to edit and retry for OTP */
@@ -418,6 +427,7 @@ public class HttpsProvisioningManager {
                 urlConnection = executeHttpRequest(true, request);
                 result.code = urlConnection.getResponseCode();
             }
+            mCookie = urlConnection.getHeaderField("Set-Cookie");
             switch (result.code) {
                 case HttpURLConnection.HTTP_OK:
                     if (logActivated) {
@@ -519,6 +529,8 @@ public class HttpsProvisioningManager {
      * @return provisioning URI
      */
     private String buildProvisioningAddress() {
+        if (mRcsSettings.isCmccRelease())
+            return "config.rcs.chinamobile.com";// "cc.komect.com"
         String mnc = String.format(Locale.US, "%03d", mRcsSettings.getMobileNetworkCode());
         String mcc = String.format(Locale.US, "%03d", mRcsSettings.getMobileCountryCode());
         return "config.rcs.mnc" + mnc + ".mcc" + mcc + ".pub.3gppnetwork.org";
@@ -597,6 +609,7 @@ public class HttpsProvisioningManager {
                 urlConnection = executeHttpRequest(false, secondaryUri);
                 result.code = urlConnection.getResponseCode();
             }
+            mCookie = urlConnection.getHeaderField("Set-Cookie");
             switch (result.code) {
                 case HttpURLConnection.HTTP_OK:
                     break;

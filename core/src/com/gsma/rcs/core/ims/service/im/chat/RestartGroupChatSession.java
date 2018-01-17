@@ -38,7 +38,7 @@ import com.gsma.rcs.provider.contact.ContactManager;
 import com.gsma.rcs.provider.messaging.MessagingLog;
 import com.gsma.rcs.provider.settings.RcsSettings;
 import com.gsma.rcs.utils.logger.Logger;
-import com.gsma.services.rcs.chat.GroupChat.ParticipantStatus;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.Participant.Status;
 import com.gsma.services.rcs.contact.ContactId;
 
 import android.net.Uri;
@@ -81,9 +81,9 @@ public class RestartGroupChatSession extends GroupChatSession {
      * @param contactManager the contact manager
      */
     public RestartGroupChatSession(InstantMessagingService imService, Uri conferenceId,
-            String subject, String contributionId,
-            Map<ContactId, ParticipantStatus> storedParticipants, RcsSettings rcsSettings,
-            MessagingLog messagingLog, long timestamp, ContactManager contactManager) {
+                                   String subject, String contributionId,
+                                   Map<ContactId, Status> storedParticipants, RcsSettings rcsSettings,
+                                   MessagingLog messagingLog, long timestamp, ContactManager contactManager) {
         super(imService, null, conferenceId, storedParticipants, rcsSettings, messagingLog,
                 timestamp, contactManager);
 
@@ -115,8 +115,8 @@ public class RestartGroupChatSession extends GroupChatSession {
                     .getLocalSocketProtocol(), getAcceptTypes(), getWrappedTypes(), localSetup,
                     getMsrpMgr().getLocalMsrpPath(), SdpUtils.DIRECTION_SENDRECV);
             Set<ContactId> invitees = new HashSet<>();
-            Map<ContactId, ParticipantStatus> participants = getParticipants();
-            for (Map.Entry<ContactId, ParticipantStatus> participant : participants.entrySet()) {
+            Map<ContactId, Status> participants = getParticipants();
+            for (Map.Entry<ContactId, Status> participant : participants.entrySet()) {
                 switch (participant.getValue()) {
                     case INVITE_QUEUED:
                     case INVITING:

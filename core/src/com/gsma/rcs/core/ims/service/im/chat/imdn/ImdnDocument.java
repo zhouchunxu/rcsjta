@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,6 +71,11 @@ public class ImdnDocument {
     public static final String IMDN_NAMESPACE = "imdn <urn:ietf:params:imdn>";
 
     public static final int IMDN_DATETIME_NOT_SET = 0;
+
+    /**
+     * Disposition notification header negative delivery value
+     */
+    public static final String NEGATIVE_DELIVERY ="negative-delivery";
 
     /**
      * Disposition notification header positive delivery value

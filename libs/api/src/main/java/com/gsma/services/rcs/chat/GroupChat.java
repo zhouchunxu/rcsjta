@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,11 +28,12 @@ import com.gsma.services.rcs.RcsGenericException;
 import com.gsma.services.rcs.RcsIllegalArgumentException;
 import com.gsma.services.rcs.RcsPermissionDeniedException;
 import com.gsma.services.rcs.RcsPersistentStorageException;
-import com.gsma.services.rcs.RcsService.Direction;
 import com.gsma.services.rcs.RcsUnsupportedOperationException;
+import com.gsma.services.rcs.RcsService.Direction;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.Participant;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.ReasonCode;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.State;
 import com.gsma.services.rcs.contact.ContactId;
-
-import android.util.SparseArray;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,249 +46,6 @@ import java.util.Set;
  * @author Jean-Marc AUFFRET
  */
 public class GroupChat {
-    /**
-     * Group chat state
-     */
-    public enum State {
-
-        /**
-         * Chat invitation received
-         */
-        INVITED(0),
-
-        /**
-         * Chat invitation sent
-         */
-        INITIATING(1),
-
-        /**
-         * Chat is started
-         */
-        STARTED(2),
-
-        /**
-         * Chat has been aborted
-         */
-        ABORTED(3),
-
-        /**
-         * Chat has failed
-         */
-        FAILED(4),
-
-        /**
-         * Chat has been accepted and is in the process of becoming started.
-         */
-        ACCEPTING(5),
-
-        /**
-         * Chat invitation was rejected.
-         */
-        REJECTED(6);
-
-        private final int mValue;
-
-        private static SparseArray<State> mValueToEnum = new SparseArray<>();
-        static {
-            for (State state : State.values()) {
-                mValueToEnum.put(state.toInt(), state);
-            }
-        }
-
-        State(int value) {
-            mValue = value;
-        }
-
-        /**
-         * Gets integer value associated to State instance
-         * 
-         * @return value
-         */
-        public final int toInt() {
-            return mValue;
-        }
-
-        /**
-         * Returns a State instance for the specified integer value.
-         * 
-         * @param value the value associated to the state
-         * @return instance
-         */
-        public static State valueOf(int value) {
-            State state = mValueToEnum.get(value);
-            if (state != null) {
-                return state;
-            }
-            throw new IllegalArgumentException("No enum const class " + State.class.getName() + ""
-                    + value + "!");
-        }
-    }
-
-    /**
-     * Group chat participant status
-     */
-    public enum ParticipantStatus {
-        /**
-         * Invite can not be sent, instead it has been queued
-         */
-        INVITE_QUEUED(0),
-        /**
-         * Participant is about to be invited
-         */
-        INVITING(1),
-        /**
-         * Participant is invited
-         */
-        INVITED(2),
-        /**
-         * Participant is connected
-         */
-        CONNECTED(3),
-        /**
-         * Participant disconnected
-         */
-        DISCONNECTED(4),
-        /**
-         * Participant has departed
-         */
-        DEPARTED(5),
-        /**
-         * Participant status is failed
-         */
-        FAILED(6),
-        /**
-         * Participant declined invitation
-         */
-        DECLINED(7),
-        /**
-         * Participant invitation has timed-out
-         */
-        TIMEOUT(8);
-
-        private final int mValue;
-
-        private static SparseArray<ParticipantStatus> mValueToEnum = new SparseArray<>();
-        static {
-            for (ParticipantStatus status : ParticipantStatus.values()) {
-                mValueToEnum.put(status.toInt(), status);
-            }
-        }
-
-        ParticipantStatus(int value) {
-            mValue = value;
-        }
-
-        public final int toInt() {
-            return mValue;
-        }
-
-        public static ParticipantStatus valueOf(int value) {
-            ParticipantStatus status = mValueToEnum.get(value);
-            if (status != null) {
-                return status;
-            }
-            throw new IllegalArgumentException("No enum const class "
-                    + ParticipantStatus.class.getName() + "" + value + "!");
-        }
-    }
-
-    /**
-     * Group chat state reason code
-     */
-    public enum ReasonCode {
-
-        /**
-         * No specific reason code specified.
-         */
-        UNSPECIFIED(0),
-
-        /**
-         * Group chat is aborted by local user.
-         */
-        ABORTED_BY_USER(1),
-
-        /**
-         * Group chat is aborted by remote user.
-         */
-        ABORTED_BY_REMOTE(2),
-
-        /**
-         * Group chat is aborted by inactivity.
-         */
-        ABORTED_BY_INACTIVITY(3),
-
-        /**
-         * Group chat is rejected because already taken by the secondary device.
-         */
-        REJECTED_BY_SECONDARY_DEVICE(4),
-
-        /**
-         * Group chat invitation was rejected as it was detected as spam.
-         */
-        REJECTED_SPAM(5),
-
-        /**
-         * Group chat invitation was rejected due to max number of chats open already.
-         */
-        REJECTED_MAX_CHATS(6),
-
-        /**
-         * Group chat invitation was rejected by remote.
-         */
-        REJECTED_BY_REMOTE(7),
-
-        /**
-         * Group chat invitation was rejected by timeout.
-         */
-        REJECTED_BY_TIMEOUT(8),
-
-        /**
-         * Group chat invitation was rejected by system.
-         */
-        REJECTED_BY_SYSTEM(9),
-
-        /**
-         * Group chat initiation failed.
-         */
-        FAILED_INITIATION(10);
-
-        private final int mValue;
-
-        private static SparseArray<ReasonCode> mValueToEnum = new SparseArray<>();
-        static {
-            for (ReasonCode reasonCode : ReasonCode.values()) {
-                mValueToEnum.put(reasonCode.toInt(), reasonCode);
-            }
-        }
-
-        ReasonCode(int value) {
-            mValue = value;
-        }
-
-        /**
-         * Gets integer value associated to ReasonCode instance
-         * 
-         * @return value
-         */
-        public final int toInt() {
-            return mValue;
-        }
-
-        /**
-         * Returns a ReasonCode instance for the specified integer value.
-         * 
-         * @param value the value associated to the reason code
-         * @return instance
-         */
-        public static ReasonCode valueOf(int value) {
-            ReasonCode reasonCode = mValueToEnum.get(value);
-            if (reasonCode != null) {
-                return reasonCode;
-            }
-            throw new IllegalArgumentException("No enum const class " + ReasonCode.class.getName()
-                    + "" + value + "!");
-        }
-    }
 
     /**
      * Group chat interface
@@ -303,7 +62,9 @@ public class GroupChat {
     }
 
     /**
-     * @throws RcsGenericException Returns the chat ID
+     * Returns the chat ID
+     * 
+     * @throws RcsGenericException
      * @return chat Id
      */
     public String getChatId() throws RcsGenericException {
@@ -341,7 +102,8 @@ public class GroupChat {
      * @throws RcsPersistentStorageException
      * @throws RcsGenericException
      */
-    public State getState() throws RcsPersistentStorageException, RcsGenericException {
+    public State getState() throws RcsPersistentStorageException,
+            RcsGenericException {
         try {
             return State.valueOf(mGroupChatInf.getState());
 
@@ -359,7 +121,8 @@ public class GroupChat {
      * @throws RcsPersistentStorageException
      * @throws RcsGenericException
      */
-    public ReasonCode getReasonCode() throws RcsPersistentStorageException, RcsGenericException {
+    public ReasonCode getReasonCode() throws RcsPersistentStorageException,
+            RcsGenericException {
         try {
             return ReasonCode.valueOf(mGroupChatInf.getReasonCode());
 
@@ -406,7 +169,7 @@ public class GroupChat {
     /**
      * Returns the map of participants and associated status .
      * 
-     * @return Map&lt;ContactId, ParticipantStatus&gt;
+     * @return Map&lt;ContactId, Status&gt;
      * @throws RcsPersistentStorageException
      * @throws RcsGenericException
      */
@@ -414,15 +177,15 @@ public class GroupChat {
      * Unchecked cast must be suppressed since AIDL provides a raw Map type that must be cast.
      */
     @SuppressWarnings("unchecked")
-    public Map<ContactId, ParticipantStatus> getParticipants()
+    public Map<ContactId, Participant.Status> getParticipants()
             throws RcsPersistentStorageException, RcsGenericException {
         try {
             Map<ContactId, Integer> apiParticipants = mGroupChatInf.getParticipants();
-            Map<ContactId, ParticipantStatus> participants = new HashMap<>();
+            Map<ContactId, Participant.Status> participants = new HashMap<>();
 
             for (Map.Entry<ContactId, Integer> apiParticipant : apiParticipants.entrySet()) {
                 participants.put(apiParticipant.getKey(),
-                        ParticipantStatus.valueOf(apiParticipant.getValue()));
+                        Participant.Status.valueOf(apiParticipant.getValue()));
             }
 
             return participants;
@@ -447,6 +210,41 @@ public class GroupChat {
             return mGroupChatInf.getTimestamp();
 
         } catch (Exception e) {
+            RcsPersistentStorageException.assertException(e);
+            throw new RcsGenericException(e);
+        }
+    }
+
+    /**
+     * Returns the max number of participants in the group chat. This limit is read during the
+     * conference event subscription and overrides the provisioning parameter.
+     *
+     * @return int
+     * @throws RcsGenericException
+     */
+    public int getMaxParticipants() throws RcsGenericException {
+        try {
+            return mGroupChatInf.getMaxParticipants();
+
+        } catch (Exception e) {
+            throw new RcsGenericException(e);
+        }
+    }
+
+    /**
+     * Resend a message which previously failed.
+     *
+     * @param msgId the message ID
+     * @throws RcsPersistentStorageException
+     * @throws RcsGenericException
+     */
+    public void resendMessage(String msgId) throws RcsPersistentStorageException,
+            RcsGenericException {
+        try {
+            mGroupChatInf.resendMessage(msgId);
+
+        } catch (Exception e) {
+            RcsIllegalArgumentException.assertException(e);
             RcsPersistentStorageException.assertException(e);
             throw new RcsGenericException(e);
         }
@@ -516,6 +314,91 @@ public class GroupChat {
     }
 
     /**
+     * Sends an emoticon message
+     *
+     * @param emoticon Emoticon info
+     * @return ChatMessage
+     * @throws RcsPersistentStorageException
+     * @throws RcsGenericException
+     */
+    public ChatMessage sendMessage(Emoticon emoticon) throws RcsPermissionDeniedException,
+            RcsPersistentStorageException, RcsGenericException {
+        try {
+            return new ChatMessage(mGroupChatInf.sendMessage3(emoticon));
+
+        } catch (Exception e) {
+            RcsIllegalArgumentException.assertException(e);
+            RcsPermissionDeniedException.assertException(e);
+            RcsPersistentStorageException.assertException(e);
+            throw new RcsGenericException(e);
+        }
+    }
+
+    /**
+     * Sends a cloudFile message
+     *
+     * @param cloudFile CloudFile info
+     * @return ChatMessage
+     * @throws RcsPersistentStorageException
+     * @throws RcsGenericException
+     */
+    public ChatMessage sendMessage(CloudFile cloudFile) throws RcsPermissionDeniedException,
+            RcsPersistentStorageException, RcsGenericException {
+        try {
+            return new ChatMessage(mGroupChatInf.sendMessage4(cloudFile));
+
+        } catch (Exception e) {
+            RcsIllegalArgumentException.assertException(e);
+            RcsPermissionDeniedException.assertException(e);
+            RcsPersistentStorageException.assertException(e);
+            throw new RcsGenericException(e);
+        }
+    }
+
+    /**
+     * Sends a card message
+     *
+     * @param card Card info
+     * @return ChatMessage
+     * @throws RcsPersistentStorageException
+     * @throws RcsGenericException
+     */
+    public ChatMessage sendMessage(Card card) throws RcsPermissionDeniedException,
+            RcsPersistentStorageException, RcsGenericException {
+        try {
+            return new ChatMessage(mGroupChatInf.sendMessage5(card));
+
+        } catch (Exception e) {
+            RcsIllegalArgumentException.assertException(e);
+            RcsPermissionDeniedException.assertException(e);
+            RcsPersistentStorageException.assertException(e);
+            throw new RcsGenericException(e);
+        }
+    }
+
+    /**
+     * Sends a "courtesy copy" text message
+     *
+     * @param recipients Set of recipients
+     * @param text Message
+     * @return ChatMessage
+     * @throws RcsPersistentStorageException
+     * @throws RcsGenericException
+     */
+    public ChatMessage sendCcMessage(Set<ContactId> recipients, String text)
+            throws RcsPermissionDeniedException, RcsPersistentStorageException, RcsGenericException {
+        try {
+            return new ChatMessage(mGroupChatInf.sendCcMessage(new ArrayList<>(recipients), text));
+
+        } catch (Exception e) {
+            RcsIllegalArgumentException.assertException(e);
+            RcsPermissionDeniedException.assertException(e);
+            RcsPersistentStorageException.assertException(e);
+            throw new RcsGenericException(e);
+        }
+    }
+
+    /**
      * This method should be called to notify the stack of if there is ongoing composing or not in
      * this GroupChat. If there is an ongoing chat session established with the remote side
      * corresponding to this GroupChat this means that a call to this method will send the
@@ -535,6 +418,47 @@ public class GroupChat {
         try {
             mGroupChatInf.setComposingStatus(ongoing);
         } catch (Exception e) {
+            throw new RcsGenericException(e);
+        }
+    }
+
+    /**
+     * Returns true if it is possible to send group announcement message in the group chat right
+     * now, else returns false.
+     *
+     * @return boolean
+     * @throws RcsPersistentStorageException
+     * @throws RcsGenericException
+     */
+    public boolean isAllowedToSendAnnouncement() throws RcsPersistentStorageException,
+            RcsGenericException {
+        try {
+            return mGroupChatInf.isAllowedToSendAnnouncement();
+
+        } catch (Exception e) {
+            RcsPersistentStorageException.assertException(e);
+            throw new RcsGenericException(e);
+        }
+    }
+
+    /**
+     * Sends an announcement message to the group
+     *
+     * @param text Message
+     * @return ChatMessage
+     * @throws RcsPermissionDeniedException
+     * @throws RcsPersistentStorageException
+     * @throws RcsGenericException
+     */
+    public ChatMessage sendAnnouncement(String text) throws RcsPermissionDeniedException,
+            RcsPersistentStorageException, RcsGenericException {
+        try {
+            return new ChatMessage(mGroupChatInf.sendAnnouncement(text));
+
+        } catch (Exception e) {
+            RcsIllegalArgumentException.assertException(e);
+            RcsPermissionDeniedException.assertException(e);
+            RcsPersistentStorageException.assertException(e);
             throw new RcsGenericException(e);
         }
     }
@@ -601,17 +525,197 @@ public class GroupChat {
     }
 
     /**
-     * Returns the max number of participants in the group chat. This limit is read during the
-     * conference event subscription and overrides the provisioning parameter.
-     * 
-     * @return int
+     * Returns true if it is possible to remove reduced participants from the group chat right now,
+     * else returns false.
+     *
+     * @return boolean
+     * @throws RcsPersistentStorageException
      * @throws RcsGenericException
      */
-    public int getMaxParticipants() throws RcsGenericException {
+    public boolean isAllowedToRemoveParticipants() throws RcsPersistentStorageException,
+            RcsGenericException {
         try {
-            return mGroupChatInf.getMaxParticipants();
+            return mGroupChatInf.isAllowedToRemoveParticipants();
 
         } catch (Exception e) {
+            RcsPersistentStorageException.assertException(e);
+            throw new RcsGenericException(e);
+        }
+    }
+
+    /**
+     * Returns true if it is possible to remove the specified participant from the group chat right
+     * now, else returns false.
+     *
+     * @param participant the contact ID
+     * @return boolean
+     * @throws RcsPersistentStorageException
+     * @throws RcsGenericException
+     */
+    public boolean isAllowedToRemoveParticipant(ContactId participant)
+            throws RcsPersistentStorageException, RcsGenericException {
+        try {
+            return mGroupChatInf.isAllowedToRemoveParticipant(participant);
+
+        } catch (Exception e) {
+            RcsPersistentStorageException.assertException(e);
+            throw new RcsGenericException(e);
+        }
+    }
+
+    /**
+     * Invite additional participants to this group chat.
+     *
+     * @param participants List of participants
+     * @throws RcsPermissionDeniedException
+     * @throws RcsPersistentStorageException
+     * @throws RcsGenericException
+     */
+    public void removeParticipants(Set<ContactId> participants)
+            throws RcsPermissionDeniedException, RcsPersistentStorageException, RcsGenericException {
+        try {
+            mGroupChatInf.removeParticipants(new ArrayList<>(participants));
+
+        } catch (Exception e) {
+            RcsIllegalArgumentException.assertException(e);
+            RcsUnsupportedOperationException.assertException(e);
+            RcsPermissionDeniedException.assertException(e);
+            RcsPersistentStorageException.assertException(e);
+            throw new RcsGenericException(e);
+        }
+    }
+
+    /**
+     * Returns true if it is possible to transfer ownership in the group chat right now, else
+     * returns false.
+     *
+     * @return boolean
+     * @throws RcsPersistentStorageException
+     * @throws RcsGenericException
+     */
+    public boolean isAllowedToTransferOwnership() throws RcsPersistentStorageException,
+            RcsGenericException {
+        try {
+            return mGroupChatInf.isAllowedToTransferOwnership();
+
+        } catch (Exception e) {
+            RcsIllegalArgumentException.assertException(e);
+            RcsPersistentStorageException.assertException(e);
+            throw new RcsGenericException(e);
+        }
+    }
+
+    /**
+     * Returns true if it is possible to transfer ownership to the specified participant in the
+     * group chat right now, else returns false.
+     *
+     * @return boolean
+     * @throws RcsPersistentStorageException
+     * @throws RcsGenericException
+     */
+    public boolean isAllowedToTakeOwnership(ContactId participant)
+            throws RcsPersistentStorageException, RcsGenericException {
+        try {
+            return mGroupChatInf.isAllowedToTransferOwnership2(participant);
+
+        } catch (Exception e) {
+            RcsIllegalArgumentException.assertException(e);
+            RcsPersistentStorageException.assertException(e);
+            throw new RcsGenericException(e);
+        }
+    }
+
+    /**
+     * Invite additional participants to this group chat.
+     *
+     * @param participant the contact ID
+     * @throws RcsPermissionDeniedException
+     * @throws RcsPersistentStorageException
+     * @throws RcsGenericException
+     */
+    public void transferOwnership(ContactId participant) throws RcsPermissionDeniedException,
+            RcsGenericException {
+        try {
+            mGroupChatInf.transferOwnership(participant);
+
+        } catch (Exception e) {
+            RcsUnsupportedOperationException.assertException(e);
+            RcsPermissionDeniedException.assertException(e);
+            throw new RcsGenericException(e);
+        }
+    }
+
+    /**
+     * Returns true if it is possible to rename the subject of the group chat right now, else
+     * returns false.
+     *
+     * @return boolean
+     * @throws RcsPersistentStorageException
+     * @throws RcsGenericException
+     */
+    public boolean isAllowedToRenameSubject() throws RcsPersistentStorageException,
+            RcsGenericException {
+        try {
+            return mGroupChatInf.isAllowedToRenameSubject();
+
+        } catch (Exception e) {
+            RcsPersistentStorageException.assertException(e);
+            throw new RcsGenericException(e);
+        }
+    }
+
+    /**
+     * Rename subject of the group chat.
+     *
+     * @throws RcsPersistentStorageException
+     * @throws RcsGenericException
+     */
+    public void renameSubject(String subject) throws RcsPermissionDeniedException,
+            RcsGenericException {
+        try {
+            mGroupChatInf.renameSubject(subject);
+
+        } catch (Exception e) {
+            RcsIllegalArgumentException.assertException(e);
+            RcsUnsupportedOperationException.assertException(e);
+            RcsPermissionDeniedException.assertException(e);
+            throw new RcsGenericException(e);
+        }
+    }
+
+    /**
+     * Returns true if it is possible to rename own alias in the group chat right now, else returns
+     * false.
+     *
+     * @return boolean
+     * @throws RcsPersistentStorageException
+     * @throws RcsGenericException
+     */
+    public boolean isAllowedToRenameAlias() throws RcsPersistentStorageException,
+            RcsGenericException {
+        try {
+            return mGroupChatInf.isAllowedToRenameAlias();
+
+        } catch (Exception e) {
+            RcsPersistentStorageException.assertException(e);
+            throw new RcsGenericException(e);
+        }
+    }
+
+    /**
+     * Rename your alias displayed to other participants in the group chat.
+     *
+     * @throws RcsPersistentStorageException
+     * @throws RcsGenericException
+     */
+    public void renameAlias(String alias) throws RcsPermissionDeniedException, RcsGenericException {
+        try {
+            mGroupChatInf.renameAlias(alias);
+
+        } catch (Exception e) {
+            RcsIllegalArgumentException.assertException(e);
+            RcsUnsupportedOperationException.assertException(e);
+            RcsPermissionDeniedException.assertException(e);
             throw new RcsGenericException(e);
         }
     }

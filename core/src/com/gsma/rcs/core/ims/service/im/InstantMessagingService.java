@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,10 +38,10 @@ import com.gsma.rcs.core.ims.network.sip.SipUtils;
 import com.gsma.rcs.core.ims.protocol.PayloadException;
 import com.gsma.rcs.core.ims.protocol.sip.SipDialogPath;
 import com.gsma.rcs.core.ims.protocol.sip.SipRequest;
-import com.gsma.rcs.core.ims.service.ContactInfo.RcsStatus;
-import com.gsma.rcs.core.ims.service.ContactInfo.RegistrationState;
 import com.gsma.rcs.core.ims.service.ImsService;
 import com.gsma.rcs.core.ims.service.ImsServiceSession;
+import com.gsma.rcs.core.ims.service.ContactInfo.RcsStatus;
+import com.gsma.rcs.core.ims.service.ContactInfo.RegistrationState;
 import com.gsma.rcs.core.ims.service.ImsServiceSession.InvitationStatus;
 import com.gsma.rcs.core.ims.service.capability.Capabilities;
 import com.gsma.rcs.core.ims.service.capability.Capabilities.CapabilitiesBuilder;
@@ -75,7 +76,14 @@ import com.gsma.rcs.core.ims.service.im.filetransfer.http.HttpFileTransferSessio
 import com.gsma.rcs.core.ims.service.im.filetransfer.http.OriginatingHttpFileSharingSession;
 import com.gsma.rcs.core.ims.service.im.filetransfer.http.OriginatingHttpGroupFileSharingSession;
 import com.gsma.rcs.core.ims.service.im.filetransfer.msrp.OriginatingMsrpFileSharingSession;
+import com.gsma.rcs.core.ims.service.im.filetransfer.msrp.OriginatingMsrpGroupFileSharingSession;
+import com.gsma.rcs.core.ims.service.im.filetransfer.msrp.OriginatingMsrpOneToManyFileSharingSession;
 import com.gsma.rcs.core.ims.service.im.filetransfer.msrp.TerminatingMsrpFileSharingSession;
+import com.gsma.rcs.core.ims.service.im.standalone.LargeMessageModeSession;
+import com.gsma.rcs.core.ims.service.im.standalone.OriginatingLargeMessageModeSession;
+import com.gsma.rcs.core.ims.service.im.standalone.OriginatingOneToManyLargeMessageModeSession;
+import com.gsma.rcs.core.ims.service.im.standalone.SmsManager;
+import com.gsma.rcs.core.ims.service.im.standalone.TerminatingLargeMessageModeSession;
 import com.gsma.rcs.core.ims.service.upload.FileUploadSession;
 import com.gsma.rcs.provider.LocalContentResolver;
 import com.gsma.rcs.provider.contact.ContactManager;
@@ -90,10 +98,13 @@ import com.gsma.rcs.provider.messaging.GroupChatDeleteTask;
 import com.gsma.rcs.provider.messaging.GroupChatMessageDeleteTask;
 import com.gsma.rcs.provider.messaging.GroupFileTransferDeleteTask;
 import com.gsma.rcs.provider.messaging.MessagingLog;
+import com.gsma.rcs.provider.messaging.OneToManyChatMessageDeleteTask;
+import com.gsma.rcs.provider.messaging.OneToManyFileTransferDeleteTask;
 import com.gsma.rcs.provider.messaging.OneToOneChatMessageDeleteTask;
 import com.gsma.rcs.provider.messaging.OneToOneChatMessageDequeueTask;
 import com.gsma.rcs.provider.messaging.OneToOneFileTransferDeleteTask;
 import com.gsma.rcs.provider.messaging.RecreateDeliveryExpirationAlarms;
+import com.gsma.rcs.provider.messaging.StandaloneMessageDequeueTask;
 import com.gsma.rcs.provider.messaging.UpdateFileTransferStateAfterUngracefulTerminationTask;
 import com.gsma.rcs.provider.settings.RcsSettings;
 import com.gsma.rcs.provider.settings.RcsSettingsData.FileTransferProtocol;
@@ -103,12 +114,14 @@ import com.gsma.rcs.service.api.ChatServiceImpl;
 import com.gsma.rcs.service.api.FileTransferServiceImpl;
 import com.gsma.rcs.service.api.ServerApiMaxAllowedSessionLimitReachedException;
 import com.gsma.rcs.service.api.ServerApiPersistentStorageException;
+import com.gsma.rcs.service.api.StandaloneMessagingServiceImpl;
 import com.gsma.rcs.utils.ContactUtil;
-import com.gsma.rcs.utils.ContactUtil.PhoneNumber;
 import com.gsma.rcs.utils.IdGenerator;
+import com.gsma.rcs.utils.PhoneUtils;
+import com.gsma.rcs.utils.ContactUtil.PhoneNumber;
 import com.gsma.rcs.utils.logger.Logger;
-import com.gsma.services.rcs.chat.GroupChat;
-import com.gsma.services.rcs.chat.GroupChat.ParticipantStatus;
+import com.gsma.services.rcs.chat.ChatLog;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.Participant.Status;
 import com.gsma.services.rcs.contact.ContactId;
 import com.gsma.services.rcs.filetransfer.FileTransfer;
 
@@ -126,6 +139,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import javax.xml.parsers.ParserConfigurationException;
+
 import javax2.sip.header.ContactHeader;
 import javax2.sip.message.Response;
 
@@ -204,6 +218,8 @@ public class InstantMessagingService extends ImsService {
         FeatureTags.FEATURE_OMA_IM
     };
 
+    private final SmsManager mSmsManager;
+
     private final ImdnManager mImdnManager;
 
     private final LocalContentResolver mLocalContentResolver;
@@ -225,6 +241,8 @@ public class InstantMessagingService extends ImsService {
     private ChatServiceImpl mChatService;
 
     private FileTransferServiceImpl mFileTransferService;
+
+    private StandaloneMessagingServiceImpl mSmService;
 
     /**
      * Constructor
@@ -254,12 +272,20 @@ public class InstantMessagingService extends ImsService {
                 mMessagingLog);
         mImdnManager = new ImdnManager(this, mRcsSettings, mMessagingLog);
         mDeliveryExpirationManager = new DeliveryExpirationManager(this, ctx, mMessagingLog);
+        mSmsManager = new SmsManager(this, mRcsSettings, mContactManager, mMessagingLog);
     }
 
     private Handler allocateBgHandler(String threadName) {
         HandlerThread thread = new HandlerThread(threadName);
         thread.start();
         return new Handler(thread.getLooper());
+    }
+
+    public void register(StandaloneMessagingServiceImpl service) {
+        if (sLogger.isActivated()) {
+            sLogger.debug(service.getClass().getName() + " registered ok.");
+        }
+        mSmService = service;
     }
 
     public void register(ChatServiceImpl service) {
@@ -281,6 +307,7 @@ public class InstantMessagingService extends ImsService {
      */
     public void initialize() {
         mImdnManager.start();
+        mSmsManager.start();
     }
 
     public void scheduleImOperation(Runnable runnable) {
@@ -345,6 +372,9 @@ public class InstantMessagingService extends ImsService {
         mImdnManager.terminate();
         mImdnManager.interrupt();
 
+        mSmsManager.terminate();
+        mSmsManager.interrupt();
+
         if (ImsServiceSession.TerminationReason.TERMINATION_BY_SYSTEM == reasonCode) {
             mImOperationHandler.getLooper().quit();
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
@@ -357,6 +387,15 @@ public class InstantMessagingService extends ImsService {
 
     @Override
     public void check() {
+    }
+
+    /**
+     * Returns the standalone messaging service manager
+     *
+     * @return sms manager
+     */
+    public SmsManager getSmsManager() {
+        return mSmsManager;
     }
 
     /**
@@ -675,7 +714,8 @@ public class InstantMessagingService extends ImsService {
 
     /**
      * Initiate a file transfer session
-     * 
+     *
+     * @param chatId Chat ID
      * @param fileTransferId File transfer Id
      * @param contact Remote contact identifier
      * @param content Content of file to sent
@@ -684,8 +724,9 @@ public class InstantMessagingService extends ImsService {
      * @param ftProtocol FileTransferProtocol
      * @return File transfer session
      */
-    public FileSharingSession createFileTransferSession(String fileTransferId, ContactId contact,
-            MmContent content, MmContent fileIcon, long timestamp, FileTransferProtocol ftProtocol) {
+    public FileSharingSession createFileTransferSession(String chatId, String fileTransferId,
+            ContactId contact, MmContent content, MmContent fileIcon, long timestamp,
+            FileTransferProtocol ftProtocol) {
         if (sLogger.isActivated()) {
             sLogger.info("Initiate a file transfer session with contact " + contact + ", file "
                     + content.toString());
@@ -700,8 +741,45 @@ public class InstantMessagingService extends ImsService {
                  * Since in MSRP communication we do not have a timestampSent to be sent in payload,
                  * then we don't need to pass the timestampSent to OriginatingMsrpFileSharingSession
                  */
-                return new OriginatingMsrpFileSharingSession(this, fileTransferId, content,
-                        contact, fileIcon, mRcsSettings, timestamp, mContactManager);
+                return new OriginatingMsrpFileSharingSession(this, chatId, fileTransferId, content,
+                        contact, PhoneUtils.formatContactIdToUri(contact), fileIcon, mRcsSettings,
+                        timestamp, mContactManager);
+            default:
+                throw new IllegalArgumentException("Unknown FileTransferProtocol " + ftProtocol);
+        }
+    }
+
+    /**
+     * Initiate a one-to-many file transfer session
+     *
+     * @param chatId Chat ID
+     * @param fileTransferId File transfer Id
+     * @param recipients List of contact identifiers
+     * @param content Content of file to sent
+     * @param fileIcon Content of fileicon
+     * @param timestamp the local timestamp when initiating the file transfer
+     * @param ftProtocol FileTransferProtocol
+     * @return File transfer session
+     */
+    public FileSharingSession createOneToManyFileTransferSession(String chatId,
+            String fileTransferId, Set<ContactId> recipients, MmContent content,
+            MmContent fileIcon, long timestamp, FileTransferProtocol ftProtocol) {
+        if (sLogger.isActivated()) {
+            sLogger.info("Initiate a one-to-many file transfer session with chatId " + chatId
+                    + ", file " + content.toString());
+        }
+        switch (ftProtocol) {
+            case HTTP:
+                /* Protocol not supported */
+                throw new IllegalArgumentException("Unsupported FileTransferProtocol " + ftProtocol);
+            case MSRP:
+                /*
+                 * Since in MSRP communication we do not have a timestampSent to be sent in payload,
+                 * then we don't need to pass the timestampSent to OriginatingMsrpFileSharingSession
+                 */
+                return new OriginatingMsrpOneToManyFileSharingSession(this, chatId, fileTransferId,
+                        content, recipients, mRcsSettings.getImMassUri(), fileIcon, mRcsSettings,
+                        timestamp, mContactManager);
             default:
                 throw new IllegalArgumentException("Unknown FileTransferProtocol " + ftProtocol);
         }
@@ -715,16 +793,37 @@ public class InstantMessagingService extends ImsService {
      * @param fileIcon Content of fileicon
      * @param groupChatId Chat contribution ID
      * @param timestamp the local timestamp when initiating the file transfer
+     * @param ftProtocol FileTransferProtocol
      * @return File transfer session
      */
     public FileSharingSession createGroupFileTransferSession(String fileTransferId,
-            MmContent content, MmContent fileIcon, String groupChatId, long timestamp) {
+            MmContent content, MmContent fileIcon, String groupChatId, long timestamp,
+            FileTransferProtocol ftProtocol) {
         if (sLogger.isActivated()) {
             sLogger.info("Send file " + content.toString() + " to " + groupChatId);
         }
-        return new OriginatingHttpGroupFileSharingSession(this, fileTransferId, content, fileIcon,
-                ImsModule.getImsUserProfile().getImConferenceUri(), groupChatId, UUID.randomUUID()
-                        .toString(), mRcsSettings, mMessagingLog, timestamp, mContactManager);
+        switch (ftProtocol) {
+            case HTTP:
+                return new OriginatingHttpGroupFileSharingSession(this, fileTransferId, content,
+                        fileIcon, ImsModule.getImsUserProfile().getImConferenceUri(), groupChatId,
+                        UUID.randomUUID().toString(), mRcsSettings, mMessagingLog, timestamp,
+                        mContactManager);
+            case MSRP:
+                /* Get the group chat info from database */
+                GroupChatInfo groupChat = mMessagingLog.getGroupChatInfo(groupChatId);
+                if (groupChat == null) {
+                    throw new ServerApiPersistentStorageException(
+                            "Group chat conversation not found in database");
+                }
+                if (groupChat.getRejoinId() == null) {
+                    throw new ServerApiPersistentStorageException("Rejoin ID not found in database");
+                }
+                return new OriginatingMsrpGroupFileSharingSession(this, groupChatId,
+                        fileTransferId, content, fileIcon, groupChat.getRejoinId(), mRcsSettings,
+                        timestamp, mContactManager);
+            default:
+                throw new IllegalArgumentException("Unknown FileTransferProtocol " + ftProtocol);
+        }
     }
 
     /**
@@ -867,6 +966,105 @@ public class InstantMessagingService extends ImsService {
     }
 
     /**
+     * Initiate a large message mode session
+     *
+     * @param chatId Chat Id
+     * @param chatMsg Chat message
+     * @return LargeMessageModeSession
+     * @throws PayloadException
+     * @throws NetworkException
+     */
+    public LargeMessageModeSession createLargeMessageModeSession(String chatId, ChatMessage chatMsg)
+            throws PayloadException, NetworkException {
+        if (sLogger.isActivated()) {
+            sLogger.info("Send a large message mode standalone message to " + chatId + ".");
+        }
+        Uri remoteUri = PhoneUtils.formatContactIdToUri(chatMsg.getRemoteContact());
+        return new OriginatingLargeMessageModeSession(this, chatId, remoteUri, chatMsg,
+                mRcsSettings, mMessagingLog, chatMsg.getTimestamp(), mContactManager);
+    }
+
+    /**
+     * Initiate a one-to-many large message mode session
+     *
+     * @param chatId Chat Id
+     * @param recipients Group of contacts
+     * @param chatMsg Chat message
+     * @return LargeMessageModeSession
+     * @throws PayloadException
+     * @throws NetworkException
+     */
+    public LargeMessageModeSession createOneToManyLargeMessageModeSession(String chatId,
+            Set<ContactId> recipients, ChatMessage chatMsg) throws PayloadException,
+            NetworkException {
+        if (sLogger.isActivated()) {
+            sLogger.info("Send a 1-N large message mode standalone message to " + chatId + ".");
+        }
+        return new OriginatingOneToManyLargeMessageModeSession(this, chatId,
+                mRcsSettings.getImMassUri(), recipients, chatMsg, mRcsSettings, mMessagingLog,
+                chatMsg.getTimestamp(), mContactManager);
+    }
+
+    /**
+     * Receive a large message mode standalone message invitation
+     *
+     * @param invite Initial invite
+     * @param timestamp Local timestamp when got SipRequest
+     */
+    public void onLargeMessageModeInvitationReceived(final SipRequest invite, final long timestamp) {
+        final InstantMessagingService imService = this;
+        scheduleImOperation(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    boolean logActivated = sLogger.isActivated();
+                    String referredId = ChatUtils.getReferredIdentityAsContactUri(invite);
+                    ContactId remote = ChatUtils.getReferredIdentityAsContactId(invite);
+                    String displayName = SipUtils.getDisplayNameFromInvite(invite);
+                    if (remote == null) {
+                        if (logActivated) {
+                            sLogger.error("Discard large message mode invitation: invalid remote ID '"
+                                    + referredId + "'");
+                        }
+                        sendErrorResponse(invite, Response.BUSY_HERE);
+                        return;
+                    }
+                    if (logActivated) {
+                        sLogger.debug("Receive a large message mode invitation from ".concat(remote
+                                .toString()));
+                    }
+                    /*
+                     * Update the remote contact's capabilities to include at least standalone
+                     * message capabilities as we have just received a standalone message from this
+                     * contact so he/she must at least have this capability. We do not need any
+                     * capability exchange response to determine that.
+                     */
+                    mContactManager.mergeContactCapabilities(remote, new CapabilitiesBuilder()
+                            .setStandaloneMessaging(true).setTimestampOfLastResponse(timestamp)
+                            .build(), RcsStatus.RCS_CAPABLE, RegistrationState.ONLINE, displayName);
+
+                    LargeMessageModeSession session = new TerminatingLargeMessageModeSession(
+                            imService, invite, remote, mRcsSettings, mMessagingLog, timestamp,
+                            mContactManager);
+                    mSmsManager.receiveLargeMessageModeInvitation(session);
+                    session.startSession();
+
+                } catch (NetworkException e) {
+                    if (sLogger.isActivated()) {
+                        sLogger.debug("Failed to receive large message mode invitation! ("
+                                + e.getMessage() + ")");
+                    }
+                    tryToSendErrorResponse(invite, Response.BUSY_HERE);
+
+                } catch (FileAccessException | ContactManagerException | PayloadException e) {
+                    sLogger.error("Failed to receive large message mode invitation!", e);
+                    tryToSendErrorResponse(invite, Response.DECLINE);
+                }
+            }
+        });
+    }
+
+    /**
      * Initiate a one-to-one chat session
      * 
      * @param contact Remote contact identifier
@@ -961,6 +1159,7 @@ public class InstantMessagingService extends ImsService {
                             .setImSession(true).setTimestampOfLastResponse(timestamp).build(),
                             RcsStatus.RCS_CAPABLE, RegistrationState.ONLINE, displayName);
 
+                    String chatId = remote.toString();//FIXME 2018-01-17
                     ChatMessage firstMsg = ChatUtils.getFirstMessage(invite, timestamp);
                     if (mContactManager.isBlockedForContact(remote)) {
                         if (logActivated) {
@@ -970,7 +1169,7 @@ public class InstantMessagingService extends ImsService {
 
                         if (firstMsg != null
                                 && !mMessagingLog.isMessagePersisted(firstMsg.getMessageId())) {
-                            mMessagingLog.addOneToOneSpamMessage(firstMsg);
+                            mMessagingLog.addOneToOneSpamMessage(chatId, firstMsg);
                         }
 
                         if (mImdnManager.isDeliveryDeliveredReportsEnabled()) {
@@ -1005,8 +1204,8 @@ public class InstantMessagingService extends ImsService {
                         boolean imdnDisplayRequested = mImdnManager
                                 .isSendOneToOneDeliveryDisplayedReportsEnabled()
                                 && ChatUtils.isImdnDisplayedRequested(invite);
-                        mMessagingLog
-                                .addIncomingOneToOneChatMessage(firstMsg, imdnDisplayRequested);
+                        mMessagingLog.addIncomingOneToOneChatMessage(chatId, firstMsg,
+                                imdnDisplayRequested);
                     }
 
                     if (!isChatSessionAvailable()) {
@@ -1053,8 +1252,8 @@ public class InstantMessagingService extends ImsService {
         if (sLogger.isActivated()) {
             sLogger.info("Initiate an ad-hoc group chat session");
         }
-        Map<ContactId, ParticipantStatus> participants = ChatUtils.getParticipants(contacts,
-                ParticipantStatus.INVITING);
+        Map<ContactId, Status> participants = ChatUtils.getParticipants(contacts,
+                Status.INVITING);
         return new OriginatingAdhocGroupChatSession(this, ImsModule.getImsUserProfile()
                 .getImConferenceUri(), subject, participants, mRcsSettings, mMessagingLog,
                 timestamp, mContactManager);
@@ -1091,15 +1290,15 @@ public class InstantMessagingService extends ImsService {
 
                     String chatId = ChatUtils.getContributionId(invite);
                     String subject = ChatUtils.getSubject(invite);
-                    Map<ContactId, ParticipantStatus> participants = ChatUtils.getParticipants(
-                            invite, ParticipantStatus.FAILED);
+                    Map<ContactId, Status> participants = ChatUtils.getParticipants(
+                            invite, Status.FAILED);
                     if (mContactManager.isBlockedForContact(contact)) {
                         if (logActivated) {
                             sLogger.debug("Contact " + contact
                                     + " is blocked: automatically reject the chat invitation");
                         }
                         mChatService.addGroupChatInvitationRejected(chatId, contact, subject,
-                                participants, GroupChat.ReasonCode.REJECTED_SPAM, timestamp);
+                                participants, ChatLog.GroupChat.ReasonCode.REJECTED_SPAM, timestamp);
                         sendErrorResponse(invite, Response.BUSY_HERE);
                         return;
                     }
@@ -1109,7 +1308,7 @@ public class InstantMessagingService extends ImsService {
                                     + contact);
                         }
                         mChatService.addGroupChatInvitationRejected(chatId, contact, subject,
-                                participants, GroupChat.ReasonCode.REJECTED_MAX_CHATS, timestamp);
+                                participants, ChatLog.GroupChat.ReasonCode.REJECTED_MAX_CHATS, timestamp);
                         sendErrorResponse(invite, Response.BUSY_HERE);
                         return;
                     }
@@ -1117,8 +1316,8 @@ public class InstantMessagingService extends ImsService {
                      * Get the list of participants from the invite, give them the initial status
                      * INVITED as the actual status was not included in the invite.
                      */
-                    Map<ContactId, ParticipantStatus> inviteParticipants = ChatUtils
-                            .getParticipants(invite, ParticipantStatus.INVITED);
+                    Map<ContactId, Status> inviteParticipants = ChatUtils
+                            .getParticipants(invite, Status.INVITED);
                     // @FIXME: This method should return an URI
                     String remoteUri = ChatUtils.getReferredIdentityAsContactUri(invite);
 
@@ -1224,7 +1423,7 @@ public class InstantMessagingService extends ImsService {
         if (logActivated) {
             sLogger.debug("Restart group chat: " + groupChat.toString());
         }
-        Map<ContactId, ParticipantStatus> storedParticipants = groupChat.getParticipants();
+        Map<ContactId, Status> storedParticipants = groupChat.getParticipants();
         if (storedParticipants.isEmpty()) {
             if (logActivated) {
                 sLogger.warn("Group chat " + chatId + " can't be restarted: participants not found");
@@ -1356,7 +1555,6 @@ public class InstantMessagingService extends ImsService {
                     if (logActivated) {
                         sLogger.debug("Receive S&F push messages invitation");
                     }
-                    ChatMessage firstMsg = ChatUtils.getFirstMessage(invite, timestamp);
 
                     if (mContactManager.isBlockedForContact(remote)) {
                         if (logActivated) {
@@ -1366,6 +1564,9 @@ public class InstantMessagingService extends ImsService {
                         sendErrorResponse(invite, Response.BUSY_HERE);
                         return;
                     }
+
+                    String chatId = remote.toString();//FIXME
+                    ChatMessage firstMsg = ChatUtils.getFirstMessage(invite, timestamp);
                     /*
                      * Save the message if it was not already persisted in the DB. We don't have to
                      * reject the session if the message was a duplicate one as the session
@@ -1378,8 +1579,8 @@ public class InstantMessagingService extends ImsService {
                         boolean imdnDisplayRequested = mImdnManager
                                 .isSendOneToOneDeliveryDisplayedReportsEnabled()
                                 && ChatUtils.isImdnDisplayedRequested(invite);
-                        mMessagingLog
-                                .addIncomingOneToOneChatMessage(firstMsg, imdnDisplayRequested);
+                        mMessagingLog.addIncomingOneToOneChatMessage(chatId, firstMsg,
+                                imdnDisplayRequested);
                     }
                     getStoreAndForwardManager().receiveStoreAndForwardMessageInvitation(invite,
                             remote, timestamp);
@@ -1960,6 +2161,18 @@ public class InstantMessagingService extends ImsService {
                 && mMessagingLog.isFileTransfer(fileTransferId);
     }
 
+
+    /**
+     * Try to dequeue standalone messages for specific chatId
+     *
+     * @param chatId the chat ID
+     */
+    public void tryToDequeueStandaloneMessages(String chatId) {
+        mImOperationHandler.post(new StandaloneMessageDequeueTask(mCtx, mCore, mMessagingLog,
+                mSmService, mChatService, mFileTransferService, mContactManager, mRcsSettings,
+                chatId));
+    }
+
     /**
      * Try to dequeue of one-to-one chat messages for specific contact
      * 
@@ -2073,6 +2286,17 @@ public class InstantMessagingService extends ImsService {
     }
 
     /**
+     * Deletes all one to many chat from history and abort/reject any associated ongoing session if
+     * such exists.
+     */
+    public void tryToDeleteOneToManyChats() {
+        mImDeleteOperationHandler.post(new OneToManyFileTransferDeleteTask(mFileTransferService,
+                this, mLocalContentResolver));
+        mImDeleteOperationHandler.post(new OneToManyChatMessageDeleteTask(mChatService, this,
+                mLocalContentResolver));
+    }
+
+    /**
      * Deletes all group chat from history and abort/reject any associated ongoing session if such
      * exists.
      */
@@ -2096,6 +2320,17 @@ public class InstantMessagingService extends ImsService {
                 this, mLocalContentResolver, contact));
         mImDeleteOperationHandler.post(new OneToOneChatMessageDeleteTask(mChatService, this,
                 mLocalContentResolver, contact));
+    }
+
+    /**
+     * Delete a one to many chat by its chat id from history and abort/reject any associated
+     * ongoing session if such exists.
+     *
+     * @param chatId the chat ID
+     */
+    public void tryToDeleteOneToManyChat(String chatId) {
+        mImDeleteOperationHandler.post(new OneToManyChatMessageDeleteTask(mChatService, this,
+                mLocalContentResolver, chatId));
     }
 
     /**
@@ -2123,6 +2358,9 @@ public class InstantMessagingService extends ImsService {
         if (mMessagingLog.isOneToOneChatMessage(msgId)) {
             mImDeleteOperationHandler.post(new OneToOneChatMessageDeleteTask(mChatService, this,
                     mLocalContentResolver, msgId));
+        } else if (false/*mMessagingLog.isOneToManyChatMessage(msgId)*/) {//FIXME
+            mImDeleteOperationHandler.post(new OneToManyChatMessageDeleteTask(mChatService, this,
+                    mLocalContentResolver, null, msgId));
         } else {
             mImDeleteOperationHandler.post(new GroupChatMessageDeleteTask(mChatService, this,
                     mLocalContentResolver, null, msgId));
@@ -2140,6 +2378,9 @@ public class InstantMessagingService extends ImsService {
             mImDeleteOperationHandler.post(new GroupFileTransferDeleteTask(mFileTransferService,
                     this, mLocalContentResolver, mMessagingLog.getFileTransferChatId(transferId),
                     transferId));
+        } else if (mMessagingLog.isOneToManyFileTransfer(transferId)) {
+            mImDeleteOperationHandler.post(new OneToManyFileTransferDeleteTask(mFileTransferService,
+                    this, mLocalContentResolver, transferId));
         } else {
             mImDeleteOperationHandler.post(new OneToOneFileTransferDeleteTask(mFileTransferService,
                     this, mLocalContentResolver, transferId));
@@ -2158,11 +2399,42 @@ public class InstantMessagingService extends ImsService {
     }
 
     /**
+     * Try to delete file transfer corresponding to a one to many chat specified by its chat id from
+     * history and abort/reject any associated ongoing session if such exists.
+     *
+     * @param chatId the chat ID
+     */
+    public void tryToDeleteOneToManyFileTransfers(String chatId) {
+        mImDeleteOperationHandler.post(new OneToManyFileTransferDeleteTask(mFileTransferService,
+                this, mLocalContentResolver, chatId));
+    }
+
+    /**
+     * Try to delete file transfer corresponding to a group chat by its chat id from history and
+     * abort/reject any associated ongoing session if such exists.
+     *
+     * @param chatId the chat ID
+     */
+    public void tryToDeleteGroupFileTransfers(String chatId) {
+        mImDeleteOperationHandler.post(new GroupFileTransferDeleteTask(mFileTransferService, this,
+                mLocalContentResolver, chatId));
+    }
+
+    /**
      * Try to delete all one to one file transfer from history and abort/reject any associated
      * ongoing session if such exists.
      */
     public void tryToDeleteOneToOneFileTransfers() {
         mImDeleteOperationHandler.post(new OneToOneFileTransferDeleteTask(mFileTransferService,
+                this, mLocalContentResolver));
+    }
+
+    /**
+     * Try to delete all one to many file transfer from history and abort/reject any associated
+     * ongoing session if such exists.
+     */
+    public void tryToDeleteOneToManyFileTransfers() {
+        mImDeleteOperationHandler.post(new OneToManyFileTransferDeleteTask(mFileTransferService,
                 this, mLocalContentResolver));
     }
 
@@ -2275,8 +2547,25 @@ public class InstantMessagingService extends ImsService {
     }
 
     /**
+     * New one-to-many file delivery status
+     *
+     * @param chatId Chat Id
+     * @param contact who notified status
+     * @param imdn IMDN document
+     */
+    public void receiveOneToManyFileDeliveryStatus(String chatId, ContactId contact,
+            ImdnDocument imdn) {
+        if (sLogger.isActivated()) {
+            sLogger.debug("Handle one-to-many file delivery status: fileTransferId=" + imdn.getMsgId()
+                    + " notification_type=" + imdn.getNotificationType() + " status="
+                    + imdn.getStatus() + " contact=" + contact);
+        }
+        mFileTransferService.receiveOneToManyFileDeliveryStatus(chatId, imdn, contact);
+    }
+
+    /**
      * New group file delivery status
-     * 
+     *
      * @param chatId Chat Id
      * @param contact who notified status
      * @param imdn IMDN document

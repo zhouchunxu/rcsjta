@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2016 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,6 +79,7 @@ public class CapabilitiesProvisioning extends Fragment implements IProvisioningF
         mHelper.setBoolCheckBox(R.id.file_transfer_msrp, RcsSettingsData.CAPABILITY_FILE_TRANSFER);
         mHelper.setBoolCheckBox(R.id.file_transfer_http,
                 RcsSettingsData.CAPABILITY_FILE_TRANSFER_HTTP);
+        mHelper.setBoolCheckBox(R.id.standalone_messaging, RcsSettingsData.CAPABILITY_STANDALONE_MESSAGING);
         mHelper.setBoolCheckBox(R.id.im, RcsSettingsData.CAPABILITY_IM_SESSION);
         mHelper.setBoolCheckBox(R.id.im_group, RcsSettingsData.CAPABILITY_IM_GROUP_SESSION);
         mHelper.setBoolCheckBox(R.id.ipvoicecall, RcsSettingsData.CAPABILITY_IP_VOICE_CALL);
@@ -108,6 +110,7 @@ public class CapabilitiesProvisioning extends Fragment implements IProvisioningF
         mHelper.saveBoolCheckBox(R.id.file_transfer_msrp, RcsSettingsData.CAPABILITY_FILE_TRANSFER);
         mHelper.saveBoolCheckBox(R.id.file_transfer_http,
                 RcsSettingsData.CAPABILITY_FILE_TRANSFER_HTTP);
+        mHelper.saveBoolCheckBox(R.id.standalone_messaging, RcsSettingsData.CAPABILITY_STANDALONE_MESSAGING);
         mHelper.saveBoolCheckBox(R.id.im, RcsSettingsData.CAPABILITY_IM_SESSION);
         mHelper.saveBoolCheckBox(R.id.im_group, RcsSettingsData.CAPABILITY_IM_GROUP_SESSION);
         mHelper.saveBoolCheckBox(R.id.ipvoicecall, RcsSettingsData.CAPABILITY_IP_VOICE_CALL);

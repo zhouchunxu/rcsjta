@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2015 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +62,8 @@ public class SipUtils {
 
     private final static String UA_HEADER_OMA_SIMPLE_IM = "IM-client/OMA1.0 ";
 
+    private final static String UA_HEADER_OMA_CPM = "CPM-client/OMA1.0 ";
+
     private final static String UA_HEADER_EXT_TO_EXT_CLIENT = "ExttoExt-client/Ext1.0 ";
 
     private final static String HEADER_EXT_TO_EXT_SERVER = "ExttoExt-serv/Ext1.0 ";
@@ -109,9 +112,19 @@ public class SipUtils {
     public static final String HEADER_P_ASSERTED_IDENTITY = "P-Asserted-Identity";
 
     /**
+     * P-Asserted-Service header
+     */
+    public static final String HEADER_P_ASSERTED_SERVICE = "P-Asserted-Service";
+
+    /**
      * P-Preferred-Identity header
      */
     public static final String HEADER_P_PREFERRED_IDENTITY = "P-Preferred-Identity";
+
+    /**
+     * P-Preferred-Service header
+     */
+    public static final String HEADER_P_PREFERRED_SERVICE = "P-Preferred-Service";
 
     /**
      * P-Associated-URI header
@@ -682,4 +695,18 @@ public class SipUtils {
         return displayName;
     }
 
+    /**
+     * Get asserted service
+     * 
+     * @param request
+     * @return String
+     */
+    public static String getAssertedService(SipRequest request) {
+        ExtensionHeader assertedHeader = (ExtensionHeader) request
+                .getHeader(HEADER_P_ASSERTED_SERVICE);
+        if (assertedHeader != null) {
+            return assertedHeader.getValue();
+        }
+        return null;
+    }
 }

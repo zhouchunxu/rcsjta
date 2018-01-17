@@ -112,6 +112,20 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:paddingTop="5dip"
+            android:text="@string/IMS_public_URI_for_PC"/>
+
+        <android.support.v7.widget.AppCompatEditText
+            android:id="@+id/ImsPublicIdPc"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="5dip"
+            android:layout_marginRight="5dip"
+            android:maxLength="100"/>
+
+        <android.support.v7.widget.AppCompatTextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="5dip"
             android:text="@string/IMS_private_URI_for_HTTP_Digest"/>
 
         <android.support.v7.widget.AppCompatEditText
@@ -292,6 +306,20 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:paddingTop="5dip"
+            android:text="@string/IM_mass_URI"/>
+
+        <android.support.v7.widget.AppCompatEditText
+            android:id="@+id/ImMassUri"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="5dip"
+            android:layout_marginRight="5dip"
+            android:maxLength="100"/>
+
+        <android.support.v7.widget.AppCompatTextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="5dip"
             android:text="@string/IM_conference_URI"/>
 
         <android.support.v7.widget.AppCompatEditText
@@ -310,6 +338,90 @@
 
         <android.support.v7.widget.AppCompatEditText
             android:id="@+id/EndUserConfReqUri"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="5dip"
+            android:layout_marginRight="5dip"
+            android:maxLength="100"/>
+
+        <android.support.v7.widget.AppCompatTextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="5dip"
+            android:text="@string/Msg_store_server_address"/>
+
+        <android.support.v7.widget.AppCompatEditText
+            android:id="@+id/MsgStoreServerAddr"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="5dip"
+            android:layout_marginRight="5dip"
+            android:maxLength="100"/>
+
+        <android.support.v7.widget.AppCompatTextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="5dip"
+            android:text="@string/Profile_server_address"/>
+
+        <android.support.v7.widget.AppCompatEditText
+            android:id="@+id/ProfileServerAddr"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="5dip"
+            android:layout_marginRight="5dip"
+            android:maxLength="100"/>
+
+        <android.support.v7.widget.AppCompatTextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="5dip"
+            android:text="@string/Public_account_server_address"/>
+
+        <android.support.v7.widget.AppCompatEditText
+            android:id="@+id/PublicAccountServerAddr"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="5dip"
+            android:layout_marginRight="5dip"
+            android:maxLength="100"/>
+
+        <android.support.v7.widget.AppCompatTextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="5dip"
+            android:text="@string/SSO_server_address"/>
+
+        <android.support.v7.widget.AppCompatEditText
+            android:id="@+id/SsoServerAddr"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="5dip"
+            android:layout_marginRight="5dip"
+            android:maxLength="100"/>
+
+        <android.support.v7.widget.AppCompatTextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="5dip"
+            android:text="@string/Qrcard_server_address"/>
+
+        <android.support.v7.widget.AppCompatEditText
+            android:id="@+id/QrcardServerAddr"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="5dip"
+            android:layout_marginRight="5dip"
+            android:maxLength="100"/>
+
+        <android.support.v7.widget.AppCompatTextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="5dip"
+            android:text="@string/PC_application_server_address"/>
+
+        <android.support.v7.widget.AppCompatEditText
+            android:id="@+id/PcApplicationServerAddr"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="5dip"

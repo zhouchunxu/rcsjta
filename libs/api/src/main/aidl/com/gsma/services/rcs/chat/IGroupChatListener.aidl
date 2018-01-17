@@ -17,6 +17,12 @@ interface IGroupChatListener {
 	void onMessageGroupDeliveryInfoChanged(in String chatId, in ContactId contact, in String mimeType,
 			in String msgId, in int status, in int reasonCode);
 
+	void onSubjectChanged(in String chatId, in String subject);
+
+	void onOwnershipChanged(in String chatId, in ContactId contact);
+
+	void onParticipantAliasChanged(in String chatId, in ContactId contact, in String alias);
+
 	void onParticipantStatusChanged(in String chatId, in ContactId contact, in int status);
 
 	void onDeleted(in List<String> chatIds);

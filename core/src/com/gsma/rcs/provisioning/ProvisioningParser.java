@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,9 +35,9 @@ import com.gsma.rcs.provider.settings.RcsSettingsData.ImMsgTech;
 import com.gsma.rcs.provider.settings.RcsSettingsData.ImSessionStartMode;
 import com.gsma.rcs.utils.CloseableUtils;
 import com.gsma.rcs.utils.ContactUtil;
-import com.gsma.rcs.utils.ContactUtil.PhoneNumber;
 import com.gsma.rcs.utils.DeviceUtils;
 import com.gsma.rcs.utils.PhoneUtils;
+import com.gsma.rcs.utils.ContactUtil.PhoneNumber;
 import com.gsma.rcs.utils.logger.Logger;
 import com.gsma.services.rcs.CommonServiceConfiguration.MessagingMethod;
 import com.gsma.services.rcs.CommonServiceConfiguration.MessagingMode;
@@ -96,7 +97,7 @@ public class ProvisioningParser {
      * Enumerated type for the root node
      */
     private enum RootNodeType {
-        VERS, TOKEN, MSG, APPLICATION, IMS, PRESENCE, XDMS, IM, CAPDISCOVERY, APN, OTHER, SERVICES, SUPL, SERVICEPROVIDEREXT, UX
+        VERS, TOKEN, MSG, APPLICATION, IMS, PRESENCE, XDMS, IM, CPM, CAPDISCOVERY, APN, OTHER, SERVICES, SUPL, SERVICEPROVIDEREXT, UX, MESSAGESTORE, PROFILE, PUBLICACCOUNT, SSO, QRCARD, PC_AS_ADDRESS
     }
 
     /**
@@ -198,6 +199,9 @@ public class ProvisioningParser {
                                     case IM:
                                         parseIM(childnode);
                                         break;
+                                    case CPM:
+                                        parseCPM(childnode);
+                                        break;
                                     case APN:
                                         parseAPN(childnode);
                                         break;
@@ -215,6 +219,24 @@ public class ProvisioningParser {
                                         break;
                                     case UX:
                                         parseUx(childnode, ImsServerVersion.NON_JOYN);
+                                        break;
+                                    case MESSAGESTORE:
+                                        parseMessageStore(childnode);
+                                        break;
+                                    case PROFILE:
+                                        parseProfile(childnode);
+                                        break;
+                                    case PUBLICACCOUNT:
+                                        parsePublicAccount(childnode);
+                                        break;
+                                    case SSO:
+                                        parseSso(childnode);
+                                        break;
+                                    case QRCARD:
+                                        parseQrcard(childnode);
+                                        break;
+                                    case PC_AS_ADDRESS:
+                                        parsePcAsAddress(childnode);
                                         break;
                                     default:
                                         if (sLogger.isActivated()) {
@@ -499,6 +521,7 @@ public class ProvisioningParser {
         String chatAuth = null;
         String groupChatAuth = null;
         String ftAuth = null;
+        String standaloneMsgAuth = null;
         String geolocPushAuth = null;
         String vsAuth = null;
         String isAuth = null;
@@ -621,6 +644,14 @@ public class ProvisioningParser {
                             (value % 16) != 0);
                 }
                 // Not used: "standaloneMsgAuth"
+                if (standaloneMsgAuth == null) {
+                    if ((standaloneMsgAuth = getValueByParamName("standaloneMsgAuth", childnode,
+                            TYPE_INT)) != null) {
+                        mRcsSettings.writeBoolean(RcsSettingsData.CAPABILITY_STANDALONE_MESSAGING,
+                                standaloneMsgAuth.equals("1"));
+                        continue;
+                    }
+                }
                 // Not used: "geolocPullAuth"
             } while ((childnode = childnode.getNextSibling()) != null);
         }
@@ -859,6 +890,7 @@ public class ProvisioningParser {
         String maxSizeFileTransfer = null;
         String ftThumb = null;
         String maxAdhocGroupSize = null;
+        String massFctyUri = null;
         String confFctyUri = null;
         String groupChatSF = null;
         String groupChatOnlySF = null;
@@ -1090,6 +1122,12 @@ public class ProvisioningParser {
                         continue;
                     }
                 }
+                if (massFctyUri == null) {// Extend parameter for mass message
+                    if ((massFctyUri = getValueByParamName("mass-fcty-uri", childnode, TYPE_TXT)) != null) {
+                        mRcsSettings.setImMassUri("".equals(massFctyUri) ? null : formatSipUri(massFctyUri.trim()));
+                        continue;
+                    }
+                }
                 if (confFctyUri == null) {
                     if ((confFctyUri = getValueByParamName("conf-fcty-uri", childnode, TYPE_TXT)) != null) {
                         mRcsSettings.setImConferenceUri("".equals(confFctyUri) ? null
@@ -1139,6 +1177,93 @@ public class ProvisioningParser {
                 // Not used for RCS: "deferred-msg-func-uri"
                 // Not used for RCS: "exploder-uri"
 
+            } while ((childnode = childnode.getNextSibling()) != null);
+        }
+    }
+
+    /**
+     * parse StandaloneMsg
+     *
+     * @param node Node
+     */
+    private void parseStandaloneMsg(Node node) {
+        String maxSizeStandalone = null;
+        node = node.getFirstChild();
+        if (node != null) {
+            do {
+                if (maxSizeStandalone == null) {
+                    if ((maxSizeStandalone = getValueByParamName("MaxSizeStandalone", node,
+                            TYPE_INT)) != null) {
+                        mRcsSettings.writeInteger(RcsSettingsData.MAX_STANDALONE_MSG_LENGTH,
+                                Integer.parseInt(maxSizeStandalone));
+                        continue;
+                    }
+                }
+            } while ((node = node.getNextSibling()) != null);
+        }
+    }
+
+    /**
+     * Parse message store
+     *
+     * @param node Node
+     */
+    private void parseMessageStore(Node node) {
+        String url = null;
+        String authProt = null;
+        String userName = null;
+        String userPwd = null;
+        node = node.getFirstChild();
+        if (node != null) {
+            do {
+                if (url == null) {
+                    if ((url = getValueByParamName("Url", node, TYPE_TXT)) != null) {
+                        mRcsSettings.setMsgStoreServer("".equals(url) ? null : Uri.parse(url));
+                        continue;
+                    }
+                }
+                if (authProt == null) {
+                    if ((url = getValueByParamName("AuthProt", node, TYPE_TXT)) != null) {
+                        continue;
+                    }
+                }
+                if (userName == null) {
+                    if ((url = getValueByParamName("UserName", node, TYPE_TXT)) != null) {
+                        continue;
+                    }
+                }
+                if (userPwd == null) {
+                    if ((url = getValueByParamName("UserPwd", node, TYPE_TXT)) != null) {
+                    }
+                }
+            } while ((node = node.getNextSibling()) != null);
+        }
+    }
+
+    /**
+     * Parse CPM
+     *
+     * @param node Node
+     */
+    private void parseCPM(Node node) {
+        Node typenode;
+        Node childnode = node.getFirstChild();
+        if (childnode != null) {
+            do {
+                if (childnode.getNodeName().equals("characteristic")) {
+                    if (childnode.getAttributes().getLength() > 0) {
+                        typenode = childnode.getAttributes().getNamedItem("type");
+                        if (typenode != null) {
+                            if (typenode.getNodeValue().equalsIgnoreCase("StandaloneMsg")) {
+                                parseStandaloneMsg(childnode);
+                            } else if (typenode.getNodeValue().equalsIgnoreCase("MessageStore")) {
+                                // Not supported "MessageStore"
+                            } else if (typenode.getNodeValue().equalsIgnoreCase("Ext")) {
+                                parseExt(childnode);
+                            }
+                        }
+                    }
+                }
             } while ((childnode = childnode.getNextSibling()) != null);
         }
     }
@@ -1286,6 +1411,7 @@ public class ProvisioningParser {
                         } else if ("SRTP".equals(wifiMedia)) {
                             mRcsSettings.writeBoolean(RcsSettingsData.SECURE_RTP_OVER_WIFI, true);
                         }
+                        continue;
                     }
                 }
                 if (psMedia == null) {
@@ -1467,15 +1593,18 @@ public class ProvisioningParser {
      */
     private void parsePublicUserIdentity(Node node) {
         String publicUserIdentity = null;
-        if (node == null) {
-            return;
-        }
+        String publicUserPcIdentity = null;
         Node childnode = node.getFirstChild();
         if (childnode != null) {
+            int pubIdNumber = 0;
             do {
                 if (publicUserIdentity == null) {
-                    if ((publicUserIdentity = getValueByParamName("Public_User_Identity",
-                            childnode, TYPE_TXT)) != null) {
+                    pubIdNumber++; // Public_user_identity_List/<X>/Public_user_identity<X>
+                    publicUserIdentity = getValueByParamName("Public_User_Identity" + pubIdNumber,
+                            childnode, TYPE_TXT);
+                    if (publicUserIdentity != null
+                            || (publicUserIdentity = getValueByParamName("Public_User_Identity",
+                                    childnode, TYPE_TXT)) != null) {
                         String username = extractUserNamePart(publicUserIdentity.trim());
                         PhoneNumber number = ContactUtil.getValidPhoneNumberFromUri(username);
                         if (number == null) {
@@ -1488,6 +1617,14 @@ public class ProvisioningParser {
                                     .createContactIdFromValidatedData(number);
                             mRcsSettings.setUserProfileImsUserName(contact);
                         }
+                        continue;
+                    }
+                }
+                if (publicUserPcIdentity == null) {
+                    if ((publicUserPcIdentity = getValueByParamName("Public_User_IdentityPC",
+                            childnode, TYPE_TXT)) != null) {
+                        mRcsSettings.setUserProfileImsPublicIdPc(
+                                "".equals(publicUserPcIdentity) ? null : publicUserPcIdentity);
                     }
                 }
             } while ((childnode = childnode.getNextSibling()) != null);
@@ -1862,6 +1999,138 @@ public class ProvisioningParser {
                 // Not used for RCS: "Voice_Domain_Preference_UTRAN"
                 // Not used for RCS: "Mobility_Management_IMS_Voice_Termination"
             } while ((childnode = childnode.getNextSibling()) != null);
+        }
+    }
+
+    /**
+     * Parse china mobile profile
+     *
+     * @param node Node
+     */
+    private void parseProfile(Node node) {
+        String addr = null;
+        String addrType = null;
+        Node nodeChild = node.getFirstChild();
+        if (nodeChild != null) {
+            do {
+                if (addr == null) {
+                    if ((addr = getValueByParamName("Addr", nodeChild, TYPE_TXT)) != null) {
+                        mRcsSettings.setProfileServer("".equals(addr) ? null : Uri.parse(addr));
+                        continue;
+                    }
+                }
+                if (addrType == null) {
+                    if ((addrType = getValueByParamName("AddrType", nodeChild, TYPE_TXT)) != null) {
+                        // not used
+                    }
+                }
+            } while ((nodeChild = nodeChild.getNextSibling()) != null);
+        }
+    }
+
+    /**
+     * Parse china mobile public account
+     *
+     * @param node Node
+     */
+    private void parsePublicAccount(Node node) {
+        String addr = null;
+        String addrType = null;
+        Node nodeChild = node.getFirstChild();
+        if (nodeChild != null) {
+            do {
+                if (addr == null) {
+                    if ((addr = getValueByParamName("Addr", nodeChild, TYPE_TXT)) != null) {
+                        mRcsSettings.setPublicAccountServer("".equals(addr) ? null : Uri
+                                .parse(addr));
+                        continue;
+                    }
+                }
+                if (addrType == null) {
+                    if ((addrType = getValueByParamName("AddrType", nodeChild, TYPE_TXT)) != null) {
+                        // not used
+                    }
+                }
+            } while ((nodeChild = nodeChild.getNextSibling()) != null);
+        }
+    }
+
+    /**
+     * Parse china mobile SSO
+     *
+     * @param node Node
+     */
+    private void parseSso(Node node) {
+        String addr = null;
+        String addrType = null;
+        Node nodeChild = node.getFirstChild();
+        if (nodeChild != null) {
+            do {
+                if (addr == null) {
+                    if ((addr = getValueByParamName("Addr", nodeChild, TYPE_TXT)) != null) {
+                        mRcsSettings.setSsoServer("".equals(addr) ? null : Uri.parse(addr));
+                        continue;
+                    }
+                }
+                if (addrType == null) {
+                    if ((addrType = getValueByParamName("AddrType", nodeChild, TYPE_TXT)) != null) {
+                        // not used
+                    }
+                }
+            } while ((nodeChild = nodeChild.getNextSibling()) != null);
+        }
+    }
+
+    /**
+     * Parse china mobile QRCARD
+     *
+     * @param node Node
+     */
+    private void parseQrcard(Node node) {
+        String addr = null;
+        String addrType = null;
+        Node nodeChild = node.getFirstChild();
+        if (nodeChild != null) {
+            do {
+                if (addr == null) {
+                    if ((addr = getValueByParamName("Addr", nodeChild, TYPE_TXT)) != null) {
+                        mRcsSettings.setQrcardServer("".equals(addr) ? null : Uri.parse(addr));
+                        continue;
+                    }
+                }
+                if (addrType == null) {
+                    if ((addrType = getValueByParamName("AddrType", nodeChild, TYPE_TXT)) != null) {
+                        // not used
+                    }
+                }
+            } while ((nodeChild = nodeChild.getNextSibling()) != null);
+        }
+    }
+
+    /**
+     * Parse china mobile pc-as-address
+     *
+     * @param node Node
+     */
+    private void parsePcAsAddress(Node node) {
+        String addr = null;
+        String addrType = null;
+        Node nodeChild = node.getFirstChild();
+        if (nodeChild != null) {
+            do {
+                if (addr == null) {
+                    if ((addr = getValueByParamName("Address", nodeChild, TYPE_TXT)) != null) {
+                        mRcsSettings.setPcApplicationServer("".equals(addr) ? null : Uri
+                                .parse(addr));
+                        continue;
+                    }
+                }
+                if (addrType == null) {
+                    if ((addrType = getValueByParamName("AddressType", nodeChild, TYPE_TXT)) != null) {
+                        // not used
+                    }
+                }
+            } while ((nodeChild = nodeChild.getNextSibling()) != null);
         }
     }
 

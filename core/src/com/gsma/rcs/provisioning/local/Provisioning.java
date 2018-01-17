@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2015 Sony Mobile Communications AB.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -222,6 +223,9 @@ public class Provisioning extends AppCompatActivity {
                 break;
             case RcsService.Build.VERSION_CODES.CPR:
                 version.append("Crane PR 1.6.");
+                break;
+            case RcsService.Build.VERSION_CODES.CMR:
+                version.append("China Mobile 1.0.");
                 break;
             default:
                 version.append("Unknown 0.0");

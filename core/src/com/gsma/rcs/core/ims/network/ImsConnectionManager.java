@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2015 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +34,7 @@ import com.gsma.rcs.provider.contact.ContactManagerException;
 import com.gsma.rcs.provider.settings.RcsSettings;
 import com.gsma.rcs.provider.settings.RcsSettingsData.NetworkAccessType;
 import com.gsma.rcs.service.LauncherUtils;
+import com.gsma.rcs.utils.TelephonyUtils;
 import com.gsma.rcs.utils.logger.Logger;
 import com.gsma.services.rcs.CommonServiceConfiguration.MinimumBatteryLevel;
 
@@ -43,7 +45,6 @@ import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.BatteryManager;
-import android.telephony.TelephonyManager;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
@@ -404,9 +405,7 @@ public class ImsConnectionManager implements Runnable {
                     }
                     return;
                 }
-                TelephonyManager tm = (TelephonyManager) mCtx
-                        .getSystemService(Context.TELEPHONY_SERVICE);
-                String currentOpe = tm.getSimOperatorName();
+                String currentOpe = TelephonyUtils.getSimOperatorName();
                 if (mOperator != null && !currentOpe.equalsIgnoreCase(mOperator)) {
                     if (sLogger.isActivated()) {
                         sLogger.warn("Operator not authorized current=" + currentOpe

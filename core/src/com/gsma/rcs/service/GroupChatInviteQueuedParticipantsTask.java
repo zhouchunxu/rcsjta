@@ -23,7 +23,7 @@ import com.gsma.rcs.core.ims.service.im.chat.GroupChatSession;
 import com.gsma.rcs.service.api.ChatServiceImpl;
 import com.gsma.rcs.service.api.GroupChatImpl;
 import com.gsma.rcs.utils.logger.Logger;
-import com.gsma.services.rcs.chat.GroupChat.ParticipantStatus;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.Participant.Status;
 import com.gsma.services.rcs.contact.ContactId;
 
 import java.util.Arrays;
@@ -32,9 +32,9 @@ import java.util.Set;
 
 public class GroupChatInviteQueuedParticipantsTask implements Runnable {
 
-    private static final Set<ParticipantStatus> INVITE_QUEUED_STATUSES = new HashSet<>();
+    private static final Set<Status> INVITE_QUEUED_STATUSES = new HashSet<>();
     static {
-        INVITE_QUEUED_STATUSES.add(ParticipantStatus.INVITE_QUEUED);
+        INVITE_QUEUED_STATUSES.add(Status.INVITE_QUEUED);
     }
 
     private final String mChatId;

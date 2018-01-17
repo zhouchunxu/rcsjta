@@ -20,7 +20,6 @@ package android.tests.provider;
 
 import com.gsma.services.rcs.RcsService;
 import com.gsma.services.rcs.chat.ChatLog;
-import com.gsma.services.rcs.chat.GroupChat;
 
 import android.content.ContentProviderClient;
 import android.content.ContentValues;
@@ -111,12 +110,12 @@ public class ChatLogGroupChatTest extends InstrumentationTestCase {
         ContentValues values = new ContentValues();
         values.put(ChatLog.GroupChat.CHAT_ID, "123456789");
         values.put(ChatLog.GroupChat.DIRECTION, RcsService.Direction.INCOMING.toInt());
-        values.put(ChatLog.GroupChat.STATE, GroupChat.State.INVITED.toString());
+        values.put(ChatLog.GroupChat.STATE, ChatLog.GroupChat.State.INVITED.toString());
         values.put(ChatLog.GroupChat.SUBJECT, "subject");
         values.put(ChatLog.GroupChat.TIMESTAMP, System.currentTimeMillis());
         values.put(ChatLog.GroupChat.CONTACT, "+33612345678");
         values.put(ChatLog.GroupChat.PARTICIPANTS, "participant1,participant2");
-        values.put(ChatLog.GroupChat.REASON_CODE, GroupChat.ReasonCode.UNSPECIFIED.toInt());
+        values.put(ChatLog.GroupChat.REASON_CODE, ChatLog.GroupChat.ReasonCode.UNSPECIFIED.toInt());
         try {
             mProvider.insert(ChatLog.GroupChat.CONTENT_URI, values);
             fail("ChatLog is read only");

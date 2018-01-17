@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2015 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +40,11 @@ public class ImsError extends Error {
      * Registration has failed
      */
     public final static int REGISTRATION_FAILED = 0x02;
+
+    /**
+     * Subscription registration info has failed
+     */
+    public final static int SUBSCRIBE_FAILED = 0x03;
 
     /**
      * Error code

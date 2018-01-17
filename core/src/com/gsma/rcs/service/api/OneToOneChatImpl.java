@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,14 +46,17 @@ import com.gsma.rcs.provider.settings.RcsSettings;
 import com.gsma.rcs.provider.settings.RcsSettingsData.ImSessionStartMode;
 import com.gsma.rcs.service.broadcaster.IOneToOneChatEventBroadcaster;
 import com.gsma.rcs.utils.logger.Logger;
-import com.gsma.services.rcs.CommonServiceConfiguration.MessagingMode;
 import com.gsma.services.rcs.Geoloc;
+import com.gsma.services.rcs.CommonServiceConfiguration.MessagingMode;
 import com.gsma.services.rcs.RcsService.Direction;
-import com.gsma.services.rcs.chat.ChatLog.Message.Content.ReasonCode;
-import com.gsma.services.rcs.chat.ChatLog.Message.Content.Status;
-import com.gsma.services.rcs.chat.ChatLog.Message.MimeType;
+import com.gsma.services.rcs.chat.Card;
+import com.gsma.services.rcs.chat.CloudFile;
+import com.gsma.services.rcs.chat.Emoticon;
 import com.gsma.services.rcs.chat.IChatMessage;
 import com.gsma.services.rcs.chat.IOneToOneChat;
+import com.gsma.services.rcs.chat.ChatLog.Message.MimeType;
+import com.gsma.services.rcs.chat.ChatLog.Message.Content.ReasonCode;
+import com.gsma.services.rcs.chat.ChatLog.Message.Content.Status;
 import com.gsma.services.rcs.contact.ContactId;
 import com.gsma.services.rcs.filetransfer.FileTransfer;
 
@@ -65,6 +69,8 @@ import android.text.TextUtils;
  * @author Jean-Marc AUFFRET
  */
 public class OneToOneChatImpl extends IOneToOneChat.Stub implements OneToOneChatSessionListener {
+
+    private final String mChatId;
 
     private final ContactId mContact;
 
@@ -108,6 +114,7 @@ public class OneToOneChatImpl extends IOneToOneChat.Stub implements OneToOneChat
         mChatService = chatService;
         mRcsSettings = rcsSettings;
         mContactManager = contactManager;
+        mChatId = contact.toString();//FIXME
     }
 
     private void sendChatMessageInNewSession(final ChatMessage msg) throws PayloadException,
@@ -288,7 +295,7 @@ public class OneToOneChatImpl extends IOneToOneChat.Stub implements OneToOneChat
         String msgId = msg.getMessageId();
         long timestampSent = msg.getTimestampSent();
         long deliveryExpiration = getDeliveryExpirationTime(timestampSent);
-        mMessagingLog.addOutgoingOneToOneChatMessage(msg, status, ReasonCode.UNSPECIFIED,
+        mMessagingLog.addOutgoingOneToOneChatMessage(mChatId, msg, status, ReasonCode.UNSPECIFIED,
                 deliveryExpiration);
         if (deliveryExpiration != 0) {
             mImService.getDeliveryExpirationManager()
@@ -348,7 +355,7 @@ public class OneToOneChatImpl extends IOneToOneChat.Stub implements OneToOneChat
         int maxMessageLength = mRcsSettings.getMaxChatMessageLength();
         if (messageLength > maxMessageLength) {
             throw new ServerApiIllegalArgumentException("chat message length: " + messageLength
-                    + " exeeds max chat message length: " + maxMessageLength + "!");
+                    + " exceeds max chat message length: " + maxMessageLength + "!");
         }
         if (sLogger.isActivated()) {
             sLogger.debug("Send text message.");
@@ -429,6 +436,21 @@ public class OneToOneChatImpl extends IOneToOneChat.Stub implements OneToOneChat
             sLogger.error(ExceptionUtil.getFullStackTrace(e));
             throw new ServerApiGenericException(e);
         }
+    }
+
+    @Override
+    public IChatMessage sendMessage3(Emoticon emoticon) throws RemoteException {
+        throw new ServerApiUnsupportedOperationException("Unsupported");
+    }
+
+    @Override
+    public IChatMessage sendMessage4(CloudFile cloudFile) throws RemoteException {
+        throw new ServerApiUnsupportedOperationException("Unsupported");
+    }
+
+    @Override
+    public IChatMessage sendMessage5(Card card) throws RemoteException {
+        throw new ServerApiUnsupportedOperationException("Unsupported");
     }
 
     /**
@@ -734,7 +756,7 @@ public class OneToOneChatImpl extends IOneToOneChat.Stub implements OneToOneChat
     public void resendMessage(final String msgId) throws RemoteException {
         if (TextUtils.isEmpty(msgId)) {
             throw new ServerApiIllegalArgumentException(
-                    "OnetoOneChat messageId must not be null or empty!");
+                    "OneToOneChat messageId must not be null or empty!");
         }
         mImService.scheduleImOperation(new Runnable() {
             public void run() {
@@ -850,15 +872,15 @@ public class OneToOneChatImpl extends IOneToOneChat.Stub implements OneToOneChat
                             if (session != null) {
                                 session.terminateSession(TerminationReason.TERMINATION_BY_USER);
                             }
-                            mMessagingLog.addOneToOneSpamMessage(msg);
+                            mMessagingLog.addOneToOneSpamMessage(mChatId, msg);
                             mBroadcaster.broadcastMessageReceived(msg.getMimeType(), msgId);
                             return;
                         }
                         if (deliverySuccess) {
-                            mMessagingLog.addIncomingOneToOneChatMessage(msg,
+                            mMessagingLog.addIncomingOneToOneChatMessage(mChatId, msg,
                                     imdnDisplayedRequested);
                         } else {
-                            mMessagingLog.addOneToOneFailedDeliveryMessage(msg);
+                            mMessagingLog.addOneToOneFailedDeliveryMessage(mChatId, msg);
                         }
                         mBroadcaster.broadcastMessageReceived(msg.getMimeType(), msgId);
                     }
@@ -935,7 +957,7 @@ public class OneToOneChatImpl extends IOneToOneChat.Stub implements OneToOneChat
     @Override
     public void onMessageFailedSend(String msgId, String mimeType) {
         if (sLogger.isActivated()) {
-            sLogger.info("Message sent; msgId=" + msgId + ".");
+            sLogger.info("Message failed send; msgId=" + msgId + ".");
         }
         synchronized (mLock) {
             if (mMessagingLog.setChatMessageStatusAndReasonCode(msgId, Status.FAILED,

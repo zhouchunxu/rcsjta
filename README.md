@@ -1,3 +1,7 @@
+## TODO cmcc... ##
+The RCS-e stack of cmcc branch is an implementation of the china mobile RCS standards for Android Native UE. 
+This is a personal version, which is irrelevant to the commercial solution.
+
 # rcsjta
 RCS-e stack for Android with GSMA API **RCS-e stack for Android with GSMA API**
 

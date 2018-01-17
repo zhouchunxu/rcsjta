@@ -77,8 +77,8 @@ public class StoreAndForwardManager {
      * @throws PayloadException
      * @throws NetworkException
      */
-    public void receiveStoreAndForwardMessageInvitation(SipRequest invite, ContactId contact, long timestamp)
- throws PayloadException, NetworkException {
+    public void receiveStoreAndForwardMessageInvitation(SipRequest invite, ContactId contact,
+            long timestamp) throws PayloadException, NetworkException {
         if (sLogger.isActivated()) {
             sLogger.debug("Receive stored messages");
         }
@@ -96,7 +96,8 @@ public class StoreAndForwardManager {
      * @param contact Contact identifier
      * @param timestamp Local timestamp when got SipRequest
      */
-    public void receiveStoreAndForwardNotificationInvitation(SipRequest invite, ContactId contact, long timestamp) {
+    public void receiveStoreAndForwardNotificationInvitation(SipRequest invite, ContactId contact,
+            long timestamp) {
         if (sLogger.isActivated()) {
             sLogger.debug("Receive stored notifications");
         }

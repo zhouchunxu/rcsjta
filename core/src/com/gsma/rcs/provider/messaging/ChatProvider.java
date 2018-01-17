@@ -118,7 +118,9 @@ public class ChatProvider extends ContentProvider {
             MessageData.KEY_MESSAGE_ID, MessageData.KEY_MIME_TYPE, MessageData.KEY_READ_STATUS,
             MessageData.KEY_REASON_CODE, MessageData.KEY_STATUS, MessageData.KEY_TIMESTAMP,
             MessageData.KEY_TIMESTAMP_DELIVERED, MessageData.KEY_TIMESTAMP_DISPLAYED,
-            MessageData.KEY_TIMESTAMP_SENT
+            MessageData.KEY_TIMESTAMP_SENT, MessageData.KEY_CONVERSATION_ID,
+            MessageData.KEY_COURTESY_COPY, MessageData.KEY_DEVICE_TYPE, MessageData.KEY_SILENCE,
+            MessageData.KEY_BAR_CYCLE
     };
 
     private static final Set<String> MESSAGE_COLUMNS_SET_ALLOWED_FOR_EXTERNAL_ACCESS = new HashSet<>(
@@ -205,7 +207,9 @@ public class ChatProvider extends ContentProvider {
             db.execSQL("CREATE TABLE IF NOT EXISTS " + TABLE_MESSAGE + '('
                     + MessageData.KEY_BASECOLUMN_ID + " INTEGER NOT NULL,"
                     + MessageData.KEY_CHAT_ID + " TEXT NOT NULL,"
+                    + MessageData.KEY_CONVERSATION_ID + " TEXT,"
                     + MessageData.KEY_CONTACT + " TEXT,"
+                    + MessageData.KEY_COURTESY_COPY + " TEXT,"
                     + MessageData.KEY_MESSAGE_ID + " TEXT NOT NULL PRIMARY KEY,"
                     + MessageData.KEY_CONTENT + " TEXT,"
                     + MessageData.KEY_MIME_TYPE + " TEXT NOT NULL,"
@@ -218,7 +222,10 @@ public class ChatProvider extends ContentProvider {
                     + MessageData.KEY_TIMESTAMP_DELIVERED + " INTEGER NOT NULL,"
                     + MessageData.KEY_TIMESTAMP_DISPLAYED + " INTEGER NOT NULL,"
                     + MessageData.KEY_DELIVERY_EXPIRATION + " INTEGER NOT NULL,"
-                    + MessageData.KEY_EXPIRED_DELIVERY + " INTEGER NOT NULL)");
+                    + MessageData.KEY_EXPIRED_DELIVERY + " INTEGER NOT NULL,"
+                    + MessageData.KEY_DEVICE_TYPE + " INTEGER,"
+                    + MessageData.KEY_SILENCE + " INTEGER,"
+                    + MessageData.KEY_BAR_CYCLE + " INTEGER)");
             // @formatter:on
             db.execSQL("CREATE INDEX " + TABLE_MESSAGE + '_' + MessageData.KEY_BASECOLUMN_ID
                     + "_idx" + " ON " + TABLE_MESSAGE + '(' + MessageData.KEY_BASECOLUMN_ID + ')');

@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2015 Sony Mobile Communications Inc.
+ * Copyright (C) 2016 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +39,11 @@ public class Multipart {
     public final static String BOUNDARY_DELIMITER = "--";
 
     private static final String DOUBLE_CRLF = "\r\n\r\n";
+
+    /**
+     * Boundary tag
+     */
+    public final static String BOUNDARY_TAG = "boundary1";
 
     /**
      * Parts

@@ -186,7 +186,8 @@ public class ContactServiceImpl extends IContactService.Stub {
             return null;
         }
         return new Capabilities(capabilities.isImageSharingSupported(),
-                capabilities.isVideoSharingSupported(), capabilities.isImSessionSupported(),
+                capabilities.isVideoSharingSupported(),
+                capabilities.isStandaloneMessagingSupported(), capabilities.isImSessionSupported(),
                 capabilities.isFileTransferMsrpSupported()
                         || capabilities.isFileTransferHttpSupported(),
                 capabilities.isGeolocationPushSupported(), capabilities.getSupportedExtensions(),

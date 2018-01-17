@@ -47,8 +47,7 @@ import com.gsma.rcs.utils.ContactUtil.PhoneNumber;
 import com.gsma.rcs.utils.PeriodicRefresher;
 import com.gsma.rcs.utils.logger.Logger;
 import com.gsma.services.rcs.chat.ChatLog.Message.GroupChatEvent;
-import com.gsma.services.rcs.chat.ChatLog.Message.GroupChatEvent.Status;
-import com.gsma.services.rcs.chat.GroupChat.ParticipantStatus;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.Participant.Status;
 import com.gsma.services.rcs.contact.ContactId;
 
 import org.xml.sax.InputSource;
@@ -201,7 +200,7 @@ public class ConferenceEventSubscribeManager extends PeriodicRefresher {
                         mSession.setMaxParticipants(maxParticipants);
                     }
 
-                    Map<ContactId, ParticipantStatus> participants = new HashMap<ContactId, ParticipantStatus>();
+                    Map<ContactId, Status> participants = new HashMap<ContactId, Status>();
                     Vector<User> users = conference.getUsers();
                     for (User user : users) {
                         String phonenumber = user.getEntity();
@@ -264,9 +263,9 @@ public class ConferenceEventSubscribeManager extends PeriodicRefresher {
         }
     }
 
-    private void updateParticipantStatus(Map<ContactId, ParticipantStatus> participants,
+    private void updateParticipantStatus(Map<ContactId, Status> participants,
             long timestamp) {
-        Map<ContactId, ParticipantStatus> participantsToUpdate = mSession
+        Map<ContactId, Status> participantsToUpdate = mSession
                 .getParticipantsToUpdate(participants);
 
         if (participantsToUpdate.isEmpty()) {
@@ -275,9 +274,9 @@ public class ConferenceEventSubscribeManager extends PeriodicRefresher {
         Map<ContactId, GroupChatEvent.Status> groupChatEventsInDB = mMessagingLog
                 .getGroupChatEvents(mSession.getContributionID());
 
-        for (Map.Entry<ContactId, ParticipantStatus> participant : participantsToUpdate.entrySet()) {
+        for (Map.Entry<ContactId, Status> participant : participantsToUpdate.entrySet()) {
             ContactId contact = participant.getKey();
-            ParticipantStatus status = participant.getValue();
+            Status status = participant.getValue();
             if (isGroupChatEventRequired(contact, status, groupChatEventsInDB))
                 for (ImsSessionListener listener : mSession.getListeners()) {
                     ((GroupChatSessionListener) listener).onConferenceEventReceived(contact,
@@ -291,8 +290,8 @@ public class ConferenceEventSubscribeManager extends PeriodicRefresher {
      * Check if a new group chat event is required. It is required if there was none before for this
      * contact or if switch from JOINED to DEPARTED (or reverse) is detected.
      */
-    private boolean isGroupChatEventRequired(ContactId contact, ParticipantStatus status,
-            Map<ContactId, Status> groupChatEvents) {
+    private boolean isGroupChatEventRequired(ContactId contact, Status status,
+            Map<ContactId, GroupChatEvent.Status> groupChatEvents) {
         if (groupChatEvents == null) {
             /* there is no group chat event in provider for the session */
             return true;
@@ -303,12 +302,12 @@ public class ConferenceEventSubscribeManager extends PeriodicRefresher {
         }
         GroupChatEvent.Status statusInDB = groupChatEvents.get(contact);
 
-        if (ParticipantStatus.CONNECTED == status) {
+        if (Status.CONNECTED == status) {
             if (GroupChatEvent.Status.JOINED != statusInDB) {
                 /* Contact is not already marked as joined in provider */
                 return true;
             }
-        } else if (ParticipantStatus.DEPARTED == status) {
+        } else if (Status.DEPARTED == status) {
             if (GroupChatEvent.Status.DEPARTED != statusInDB) {
                 /* Contact is already marked as departed in provider */
                 return true;
@@ -728,7 +727,7 @@ public class ConferenceEventSubscribeManager extends PeriodicRefresher {
      * @param user the user
      * @return the integer status
      */
-    private static ParticipantStatus getStatus(User user) {
+    private static Status getStatus(User user) {
         String state = user.getState();
         /*
          * Manage "pending-out" and "pending-in" status like "pending" status. See RFC 4575
@@ -737,10 +736,10 @@ public class ConferenceEventSubscribeManager extends PeriodicRefresher {
          * conference, but the endpoint is not yet in the roster (probably being authenticated).
          */
         if ("dialing-out".equalsIgnoreCase(state)) {
-            return ParticipantStatus.INVITED;
+            return Status.INVITED;
 
         } else if ("dialing-in".equalsIgnoreCase(state)) {
-            return ParticipantStatus.INVITED;
+            return Status.INVITED;
 
         } else if (User.STATE_DISCONNECTED.equals(state)) {
             /*
@@ -753,7 +752,7 @@ public class ConferenceEventSubscribeManager extends PeriodicRefresher {
                 if (User.STATE_FAILED.equals(disconnectionMethod)) {
                     String reason = user.getFailureReason();
                     if ((reason != null) && reason.contains("603")) {
-                        return ParticipantStatus.DECLINED;
+                        return Status.DECLINED;
                     }
                 }
                 return getStatus(disconnectionMethod);
@@ -768,30 +767,30 @@ public class ConferenceEventSubscribeManager extends PeriodicRefresher {
      * @param status the string status
      * @return the integer status
      */
-    private static ParticipantStatus getStatus(final String status) {
+    private static Status getStatus(final String status) {
         if (User.STATE_CONNECTED.equals(status)) {
-            return ParticipantStatus.CONNECTED;
+            return Status.CONNECTED;
 
         } else if (User.STATE_DISCONNECTED.equals(status)) {
-            return ParticipantStatus.DISCONNECTED;
+            return Status.DISCONNECTED;
 
         } else if (User.STATE_DEPARTED.equals(status)) {
-            return ParticipantStatus.DEPARTED;
+            return Status.DEPARTED;
 
         } else if (User.STATE_BOOTED.equals(status)) {
-            return ParticipantStatus.DISCONNECTED;
+            return Status.DISCONNECTED;
 
         } else if (User.STATE_FAILED.equals(status)) {
-            return ParticipantStatus.FAILED;
+            return Status.FAILED;
 
         } else if (User.STATE_BUSY.equals(status)) {
-            return ParticipantStatus.DISCONNECTED;
+            return Status.DISCONNECTED;
 
         } else if (User.STATE_DECLINED.equals(status)) {
-            return ParticipantStatus.DECLINED;
+            return Status.DECLINED;
 
         } else if (User.STATE_PENDING.equals(status)) {
-            return ParticipantStatus.INVITED;
+            return Status.INVITED;
         }
         throw new IllegalArgumentException(new StringBuilder("Unknown status ").append(status)
                 .append(" passed to getStatus!").toString());

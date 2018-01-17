@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,6 +116,66 @@ public class OneToOneChat {
             RcsGenericException {
         try {
             return new ChatMessage(mOneToOneChatInf.sendMessage2(geoloc));
+
+        } catch (Exception e) {
+            RcsIllegalArgumentException.assertException(e);
+            RcsPersistentStorageException.assertException(e);
+            throw new RcsGenericException(e);
+        }
+    }
+
+    /**
+     * Sends an emoticon message
+     *
+     * @param emoticon Emoticon info
+     * @return ChatMessage
+     * @throws RcsPersistentStorageException
+     * @throws RcsGenericException
+     */
+    public ChatMessage sendMessage(Emoticon emoticon) throws RcsPersistentStorageException,
+            RcsGenericException {
+        try {
+            return new ChatMessage(mOneToOneChatInf.sendMessage3(emoticon));
+
+        } catch (Exception e) {
+            RcsIllegalArgumentException.assertException(e);
+            RcsPersistentStorageException.assertException(e);
+            throw new RcsGenericException(e);
+        }
+    }
+
+    /**
+     * Sends a cloudFile message
+     *
+     * @param cloudFile CloudFile info
+     * @return ChatMessage
+     * @throws RcsPersistentStorageException
+     * @throws RcsGenericException
+     */
+    public ChatMessage sendMessage(CloudFile cloudFile) throws RcsPersistentStorageException,
+            RcsGenericException {
+        try {
+            return new ChatMessage(mOneToOneChatInf.sendMessage4(cloudFile));
+
+        } catch (Exception e) {
+            RcsIllegalArgumentException.assertException(e);
+            RcsPersistentStorageException.assertException(e);
+            throw new RcsGenericException(e);
+        }
+    }
+
+    /**
+     * Sends a card message
+     *
+     * @param card Card info
+     * @return ChatMessage
+     * @throws RcsPersistentStorageException
+     * @throws RcsGenericException
+     */
+    public ChatMessage sendMessage(Card card) throws RcsPersistentStorageException,
+            RcsGenericException {
+        try {
+            return new ChatMessage(mOneToOneChatInf.sendMessage5(card));
 
         } catch (Exception e) {
             RcsIllegalArgumentException.assertException(e);

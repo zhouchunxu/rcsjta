@@ -2,6 +2,7 @@
  * Software Name : RCS IMS Stack
  *
  * Copyright (C) 2010-2016 Orange.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -213,8 +214,9 @@ public class SdpUtils {
     public static String buildFileSDP(String ipAddress, int localPort, String protocol,
             String acceptTypes, String transferId, String selector, String disposition,
             String setup, String path, String direction, long maxSize) {
-        return buildSDP(ipAddress, localPort, protocol, acceptTypes, null, transferId, selector,
-                disposition, setup, path, direction, null, maxSize);
+        return buildSDP(ipAddress, localPort, protocol, acceptTypes,
+                null /* ImdnDocument.MIME_TYPE */, transferId, selector, disposition, setup, path,
+                direction, null, maxSize);
     }
 
     // Changed by Deutsche Telekom

@@ -40,6 +40,10 @@ public class StringUtils {
 
     public static final Charset UTF16 = Charset.forName(UTF16_STR);
 
+    public static final String ISO_8859_1_STR = "iso-8859-1";
+
+    public static final Charset ISO_8859_1 = Charset.forName(ISO_8859_1_STR);
+
     public static final String PDUS = "pdus";
 
     /**

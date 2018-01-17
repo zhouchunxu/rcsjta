@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,20 +41,30 @@ import com.gsma.rcs.core.ims.service.im.chat.imdn.ImdnDocument;
 import com.gsma.rcs.core.ims.service.im.chat.imdn.ImdnParser;
 import com.gsma.rcs.core.ims.service.im.chat.imdn.ImdnUtils;
 import com.gsma.rcs.core.ims.service.im.chat.iscomposing.IsComposingInfo;
+import com.gsma.rcs.core.ims.service.im.chat.message.CardInfoDocument;
+import com.gsma.rcs.core.ims.service.im.chat.message.CardInfoParser;
+import com.gsma.rcs.core.ims.service.im.chat.message.CloudFileInfoDocument;
+import com.gsma.rcs.core.ims.service.im.chat.message.CloudFileInfoParser;
+import com.gsma.rcs.core.ims.service.im.chat.message.MediaArticle;
+import com.gsma.rcs.core.ims.service.im.chat.message.VemoticonInfoDocument;
+import com.gsma.rcs.core.ims.service.im.chat.message.VemoticonInfoParser;
 import com.gsma.rcs.core.ims.service.im.filetransfer.FileTransferUtils;
 import com.gsma.rcs.core.ims.service.im.filetransfer.http.FileTransferHttpInfoDocument;
 import com.gsma.rcs.core.ims.service.im.filetransfer.http.FileTransferHttpResumeInfo;
 import com.gsma.rcs.core.ims.service.im.filetransfer.http.FileTransferHttpResumeInfoParser;
 import com.gsma.rcs.provider.settings.RcsSettings;
 import com.gsma.rcs.utils.ContactUtil;
-import com.gsma.rcs.utils.ContactUtil.PhoneNumber;
 import com.gsma.rcs.utils.DateUtils;
 import com.gsma.rcs.utils.IdGenerator;
 import com.gsma.rcs.utils.PhoneUtils;
+import com.gsma.rcs.utils.ContactUtil.PhoneNumber;
 import com.gsma.rcs.utils.logger.Logger;
 import com.gsma.services.rcs.Geoloc;
+import com.gsma.services.rcs.chat.Card;
+import com.gsma.services.rcs.chat.CloudFile;
+import com.gsma.services.rcs.chat.Emoticon;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.Participant.Status;
 import com.gsma.services.rcs.chat.ChatLog.Message.MimeType;
-import com.gsma.services.rcs.chat.GroupChat.ParticipantStatus;
 import com.gsma.services.rcs.contact.ContactId;
 
 import android.text.TextUtils;
@@ -86,6 +97,11 @@ public class ChatUtils {
     public final static String ANONYMOUS_URI = "sip:anonymous@anonymous.invalid";
 
     /**
+     * Conversation ID header
+     */
+    public static final String HEADER_CONVERSATION_ID = "Conversation-ID";
+
+    /**
      * Contribution ID header
      */
     public static final String HEADER_CONTRIBUTION_ID = "Contribution-ID";
@@ -102,7 +118,15 @@ public class ChatUtils {
      */
     public static List<String> getSupportedFeatureTagsForGroupChat(RcsSettings rcsSettings) {
         List<String> tags = new ArrayList<>();
-        tags.add(FeatureTags.FEATURE_OMA_IM);
+        switch (rcsSettings.getImMsgTech()) {
+            case CPM:
+                tags.add(FeatureTags.FEATURE_3GPP_CPM_SESSION);
+                break;
+            case SIMPLE_IM:
+            default:
+                tags.add(FeatureTags.FEATURE_OMA_IM);
+                break;
+        }
         List<String> additionalRcseTags = new ArrayList<>();
         if (rcsSettings.isGeoLocationPushSupported()) {
             additionalRcseTags.add(FeatureTags.FEATURE_RCSE_GEOLOCATION_PUSH);
@@ -126,11 +150,24 @@ public class ChatUtils {
     /**
      * Get Accept-Contact tags for a group chat
      * 
+     * @param rcsSettings the RCS settings accessor
      * @return List of tags
      */
-    public static List<String> getAcceptContactTagsForGroupChat() {
+    public static List<String> getAcceptContactTagsForGroupChat(RcsSettings rcsSettings) {
         List<String> tags = new ArrayList<>();
-        tags.add(FeatureTags.FEATURE_OMA_IM);
+        switch (rcsSettings.getImMsgTech()) {
+            case CPM:
+                tags.add(FeatureTags.FEATURE_3GPP_CPM_SESSION);
+                if (rcsSettings.isCmccRelease()) {
+                    tags.add(FeatureTags.FEATURE_RCSE + "=\""
+                            + FeatureTags.Cmcc.FEATURE_RCSE_GROUP_MANAGE + "\"");
+                }
+                break;
+            case SIMPLE_IM:
+            default:
+                tags.add(FeatureTags.FEATURE_OMA_IM);
+                break;
+        }
         return tags;
     }
 
@@ -142,7 +179,15 @@ public class ChatUtils {
      */
     public static List<String> getSupportedFeatureTagsForChat(RcsSettings rcsSettings) {
         List<String> tags = new ArrayList<>();
-        tags.add(FeatureTags.FEATURE_OMA_IM);
+        switch (rcsSettings.getImMsgTech()) {
+            case CPM:
+                tags.add(FeatureTags.FEATURE_3GPP_CPM_SESSION);
+                break;
+            case SIMPLE_IM:
+            default:
+                tags.add(FeatureTags.FEATURE_OMA_IM);
+                break;
+        }
         List<String> additionalRcseTags = new ArrayList<>();
         if (rcsSettings.isGeoLocationPushSupported()) {
             additionalRcseTags.add(FeatureTags.FEATURE_RCSE_GEOLOCATION_PUSH);
@@ -161,6 +206,84 @@ public class ChatUtils {
                     + "\"");
         }
         return tags;
+    }
+
+    /**
+     * Get feature tag for pager mode
+     *
+     * @param rcsSettings the RCS settings accessor
+     * @return featureTag
+     */
+    public static String getFeatureTagForPagerMode(RcsSettings rcsSettings) {
+        switch (rcsSettings.getImMsgTech()) {
+            case CPM:
+                return FeatureTags.FEATURE_3GPP_CPM_MSG;
+            case SIMPLE_IM:
+            default:
+                return FeatureTags.FEATURE_OMA_IM;
+        }
+    }
+
+    /**
+     * Get feature tag for large message mode
+     *
+     * @param rcsSettings the RCS settings accessor
+     * @return List of tags
+     */
+    public static String getFeatureTagForLargeMessageMode(RcsSettings rcsSettings) {
+        switch (rcsSettings.getImMsgTech()) {
+            case CPM:
+                return FeatureTags.FEATURE_3GPP_CPM_LARGE_MSG;
+            case SIMPLE_IM:
+            default:
+                return FeatureTags.FEATURE_OMA_IM;
+        }
+    }
+
+    /**
+     * Get feature tag for session mode
+     *
+     * @param rcsSettings the RCS settings accessor
+     * @return featureTag
+     */
+    public static String getFeatureTagForSessionMode(RcsSettings rcsSettings) {
+        switch (rcsSettings.getImMsgTech()) {
+            case CPM:
+                return FeatureTags.FEATURE_3GPP_CPM_SESSION;
+            case SIMPLE_IM:
+            default:
+                return FeatureTags.FEATURE_OMA_IM;
+        }
+    }
+
+    /**
+     * Get feature tag for a file transfer
+     *
+     * @param rcsSettings the RCS settings accessor
+     * @return featureTag
+     */
+    public static String getFeatureTagForFileTransfer(RcsSettings rcsSettings) {
+        switch (rcsSettings.getImMsgTech()) {
+            case CPM:
+                return FeatureTags.FEATURE_3GPP_CPM_FILE_TRANSFER;
+            case SIMPLE_IM:
+            default:
+                return FeatureTags.FEATURE_OMA_IM;
+        }
+    }
+
+    /**
+     * Get conversation ID
+     * 
+     * @param request the SIP request
+     * @return String
+     */
+    public static String getConversationId(SipRequest request) {
+        ExtensionHeader conversHeader = (ExtensionHeader) request.getHeader(HEADER_CONVERSATION_ID);
+        if (conversHeader != null) {
+            return conversHeader.getValue();
+        }
+        return null;
     }
 
     /**
@@ -187,6 +310,16 @@ public class ChatUtils {
         ContactHeader contactHeader = (ContactHeader) request.getHeader(ContactHeader.NAME);
         String param = contactHeader.getParameter("isfocus");
         return param != null;
+    }
+
+    /**
+     * Is a burn-after-reading session request
+     *
+     * @param request Request
+     * @return Boolean
+     */
+    public static boolean isBarCycle(SipRequest request) {
+        return SipUtils.isFeatureTagPresent(request, FeatureTags.Cmcc.FEATURE_BAR_CYCLE);
     }
 
     /**
@@ -277,6 +410,46 @@ public class ChatUtils {
     }
 
     /**
+     * Is a vemoticon event type
+     *
+     * @param mime MIME type
+     * @return Boolean
+     */
+    public static boolean isVemoticonType(String mime) {
+        return mime != null && mime.toLowerCase().startsWith(VemoticonInfoDocument.MIME_TYPE);
+    }
+
+    /**
+     * Is a cloud file event type
+     *
+     * @param mime MIME type
+     * @return Boolean
+     */
+    public static boolean isCloudFileType(String mime) {
+        return mime != null && mime.toLowerCase().startsWith(CloudFileInfoDocument.MIME_TYPE);
+    }
+
+    /**
+     * Is a xml event type
+     *
+     * @param mime MIME type
+     * @return Boolean
+     */
+    public static boolean isXmlType(String mime) {
+        return mime != null && mime.toLowerCase().startsWith("application/xml");
+    }
+
+    /**
+     * Is a card event type
+     *
+     * @param mime MIME type
+     * @return Boolean
+     */
+    public static boolean isCardType(String mime) {
+        return mime != null && mime.toLowerCase().startsWith(CardInfoDocument.MIME_TYPE);
+    }
+
+    /**
      * Generate resource-list for a chat session
      * 
      * @param participants Set of participants
@@ -302,9 +475,8 @@ public class ChatUtils {
      * @param status status
      * @return participants
      */
-    public static Map<ContactId, ParticipantStatus> getParticipants(Set<ContactId> contacts,
-            ParticipantStatus status) {
-        Map<ContactId, ParticipantStatus> participants = new HashMap<>();
+    public static Map<ContactId, Status> getParticipants(Set<ContactId> contacts, Status status) {
+        Map<ContactId, Status> participants = new HashMap<>();
         for (ContactId contact : contacts) {
             participants.put(contact, status);
         }
@@ -324,14 +496,8 @@ public class ChatUtils {
                 && (contentType != null) && (contentType.equalsIgnoreCase(CpimMessage.MIME_TYPE));
     }
 
-    /**
-     * Is IMDN notification "displayed" requested
-     * 
-     * @param request Request
-     * @return Boolean
-     * @throws PayloadException
-     */
-    public static boolean isImdnDisplayedRequested(SipRequest request) throws PayloadException {
+    private static boolean isImdnNotifRequested(SipRequest request, String report)
+            throws PayloadException {
         /* Read ID from multipart content */
         String content = request.getContent();
         SipUtils.assertContentIsNotNull(content, request);
@@ -342,7 +508,18 @@ public class ChatUtils {
         index = index + ImdnUtils.HEADER_IMDN_DISPO_NOTIF.length() + 1;
         String part = content.substring(index);
         String notif = part.substring(0, part.indexOf(CRLF));
-        return notif.indexOf(ImdnDocument.DISPLAY) != -1;
+        return notif.indexOf(report) != -1;
+    }
+
+    /**
+     * Is IMDN notification "displayed" requested
+     * 
+     * @param request Request
+     * @return Boolean
+     * @throws PayloadException
+     */
+    public static boolean isImdnDisplayedRequested(SipRequest request) throws PayloadException {
+        return isImdnNotifRequested(request, ImdnDocument.DISPLAY);
     }
 
     /**
@@ -467,6 +644,34 @@ public class ChatUtils {
                 + CRLF + CpimMessage.HEADER_CONTENT_TYPE + ": " + contentType + ";charset="
                 + UTF8_STR + CRLF + CpimMessage.HEADER_CONTENT_LENGTH + ": "
                 + content.getBytes(UTF8).length + CRLF + CRLF + content;
+    }
+
+    public static String buildCpimMessageWithImdnAndCc(String from, String to, Set<ContactId> ccRecipients,
+            String messageId, String content, String contentType, long timestampSent) {
+        String base64Content = content; //Base64.encodeBase64ToString(content.getBytes(UTF8));
+        StringBuilder cpimBuilder = new StringBuilder(CpimMessage.HEADER_FROM).append(": ")
+                .append(formatCpimSipUri(from)).append(CRLF).append(CpimMessage.HEADER_TO)
+                .append(": ").append(formatCpimSipUri(to)).append(CRLF);
+        if (ccRecipients != null) {
+            for (ContactId contact : ccRecipients) {
+                cpimBuilder.append(CpimMessage.HEADER_CC).append(": ")
+                        .append(formatCpimSipUri(contact.toString())).append(CRLF);
+            }
+        }
+        cpimBuilder.append(CpimMessage.HEADER_NS).append(": ").append(ImdnDocument.IMDN_NAMESPACE)
+                .append(CRLF).append(CpimMessage.HEADER_DATETIME).append(": ")
+                .append(DateUtils.encodeDate(timestampSent)).append(CRLF)
+                .append(ImdnUtils.HEADER_IMDN_MSG_ID).append(": ").append(messageId).append(CRLF)
+                .append(ImdnUtils.HEADER_IMDN_DISPO_NOTIF).append(": ")
+                .append(ImdnDocument.NEGATIVE_DELIVERY).append(", ")
+                .append(ImdnDocument.POSITIVE_DELIVERY).append(CRLF).append(CRLF)
+                .append(CpimMessage.HEADER_CONTENT_TYPE).append(": ").append(contentType)
+                .append(";charset=").append(UTF8_STR).append(CRLF)
+                .append(CpimMessage.HEADER_CONTENT_LENGTH).append(": ")
+                .append(base64Content.getBytes(UTF8).length).append(CRLF)
+                .append(CpimMessage.HEADER_CONTENT_TRANSFER_ENCODING).append(": ").append("base64")
+                .append(CRLF).append(CRLF).append(base64Content);
+        return cpimBuilder.toString();
     }
 
     /**
@@ -638,6 +843,180 @@ public class ChatUtils {
     }
 
     /**
+     * Build a vemoticon document
+     *
+     * @param emoticon Vemoticon
+     * @return XML document
+     */
+    public static String buildVemoticonDocument(Emoticon emoticon) {
+        // @formatter:off
+        return "<?xml version=\"1.0\" encoding=\"" + UTF8_STR + "\"?>" + CRLF
+                + "<vemoticon xmlns=\"http://vemoticon.bj.ims.mnc000.mcc460.3gppnetwork.org/types\">" + CRLF
+                + "<sms>" + emoticon.getSms() + "</sms>" + CRLF
+                + "<eid>" + emoticon.getEid() + "</eid>" + CRLF
+                + "</vemoticon>" + CRLF;
+        // @formatter:on
+    }
+
+    /**
+     * Parse a vemoticon document
+     *
+     * @param xml XML document
+     * @return Vemoticon
+     * @throws PayloadException
+     */
+    public static Emoticon parseVemoticonDocument(String xml) throws PayloadException {
+        try {
+            InputSource vemoticonInput = new InputSource(new ByteArrayInputStream(
+                    xml.getBytes(UTF8)));
+            VemoticonInfoParser vemoticonParser = new VemoticonInfoParser(vemoticonInput).parse();
+            VemoticonInfoDocument vemoticonDocument = vemoticonParser.getVemoticonInfo();
+            if (vemoticonDocument == null) {
+                throw new PayloadException("Unable to parse vemoticon document!");
+            }
+            return new Emoticon(vemoticonDocument.getSms(), vemoticonDocument.getEid());
+
+        } catch (ParserConfigurationException | ParseFailureException | SAXException e) {
+            throw new PayloadException("Unable to parse vemoticon document!", e);
+        }
+    }
+
+    /**
+     * Build a cloudFile document
+     *
+     * @param cloudFile CloudFile
+     * @return XML document
+     */
+    public static String buildCloudFileDocument(CloudFile cloudFile) {
+        // @formatter:off
+        return "<?xml version=\"1.0\" encoding=\"" + UTF8_STR + "\"?>" + CRLF
+                + "<cloudfile xmlns=\"http://cloudfile.cmcc.com/types\">" + CRLF
+                + "<filename>" + cloudFile.getFileName() + "</filename>" + CRLF
+                + "<filesize>" + cloudFile.getFileSize() + "</filesize>" + CRLF
+                + "<downloadurl>" + cloudFile.getDownloadUrl() + "</downloadurl>" + CRLF
+                + "</cloudfile>" + CRLF;
+        // @formatter:on
+    }
+
+    /**
+     * Parse a cloudFile document
+     *
+     * @param xml XML document
+     * @return CloudFile
+     * @throws PayloadException
+     */
+    public static CloudFile parseCloudFileDocument(String xml) throws PayloadException {
+        try {
+            InputSource cloudFileInput = new InputSource(new ByteArrayInputStream(
+                    xml.getBytes(UTF8)));
+            CloudFileInfoParser cloudFileParser = new CloudFileInfoParser(cloudFileInput).parse();
+            CloudFileInfoDocument cloudFileDocument = cloudFileParser.getCouldFileInfo();
+            if (cloudFileDocument == null) {
+                throw new PayloadException("Unable to parse cloud file document!");
+            }
+            return new CloudFile(cloudFileDocument.getFilename(), cloudFileDocument.getFilesize(),
+                    cloudFileDocument.getDownloadurl());
+
+        } catch (ParserConfigurationException | ParseFailureException | SAXException e) {
+            throw new PayloadException("Unable to parse cloud file document!", e);
+        }
+    }
+
+    /**
+     * Build a card document
+     *
+     * @param card Card
+     * @return XML document
+     */
+    public static String buildCardDocument(Card card) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("<?xml version=\"1.0\" encoding=\"").append(UTF8_STR).append("\"?>")
+                .append(CRLF)
+                .append("<resource-lists xmlns=\"urn:ietf:params:xml:ns:resource-lists\"")
+                .append(CRLF).append("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"")
+                .append(CRLF).append("xmlns:cp=\"urn:ietf:params:xml:ns:capacity\">").append(CRLF)
+                .append("<msg_content>").append(CRLF).append("<media_type>")
+                .append(card.getMediaType()).append("</media_type>").append(CRLF);
+        if (card.getOperationType() != null) {
+            builder.append("<operation_type>").append(card.getOperationType())
+                    .append("</operation_type>").append(CRLF);
+        }
+        if (card.getCreateTime() != null) {
+            builder.append("<create_time>").append(card.getCreateTime()).append("</create_time>")
+                    .append(CRLF);
+        }
+        // TODO not full realized
+        Card.MediaArticle article = card.getCard();
+        if (article != null) {
+            builder.append("<card>").append(CRLF);
+            String value = article.getTitle();
+            if (value != null) {
+                builder.append("<title>").append(value).append("</title>").append(CRLF);
+            }
+            value = article.getAuthor();
+            if (value != null) {
+                builder.append("<author>").append(value).append("</author>").append(CRLF);
+            }
+            value = article.getThumbLink();
+            if (value != null) {
+                builder.append("<thumb_link>").append(value).append("</thumb_link>").append(CRLF);
+            }
+            value = article.getOriginalLink();
+            if (value != null) {
+                builder.append("<original_link>").append(value).append("</original_link>")
+                        .append(CRLF);
+            }
+            value = article.getBodyLink();
+            if (value != null) {
+                builder.append("<body_link>").append(value).append("</body_link>").append(CRLF);
+            }
+            value = article.getSourceLink();
+            if (value != null) {
+                builder.append("<source_link>").append(value).append("</source_link>").append(CRLF);
+            }
+            value = article.getMainText();
+            if (value != null) {
+                builder.append("<main_text>").append(value).append("</main_text>").append(CRLF);
+            }
+            value = article.getMediaUuid();
+            if (value != null) {
+                builder.append("<media_uuid>").append(value).append("</media_uuid>").append(CRLF);
+            }
+            builder.append("</card>").append(CRLF);
+        }
+        builder.append("</msg_content>").append(CRLF);
+        return builder.toString();
+    }
+
+    /**
+     * Parse a card document
+     *
+     * @param xml XML document
+     * @return Card
+     * @throws PayloadException
+     */
+    public static Card parseCardDocument(String xml) throws PayloadException {
+        try {
+            InputSource cardInput = new InputSource(new ByteArrayInputStream(xml.getBytes(UTF8)));
+            CardInfoParser cardParser = new CardInfoParser(cardInput).parse();
+            CardInfoDocument cardDocument = cardParser.getCardInfo();
+            if (cardDocument == null) {
+                throw new PayloadException("Unable to parse card document!");
+            }
+            MediaArticle article = cardDocument.getCard();
+            Card.MediaArticle card = new Card.MediaArticle(article.getTitle());
+            return new Card(cardDocument.getMediaType(), cardDocument.getOperationType(),
+                    cardDocument.getCreateTime(), cardDocument.getPaUuid(),
+                    cardDocument.getForwardable(), cardDocument.getTrustLevel(),
+                    cardDocument.getAccessId(), cardDocument.getAuthLevel(),
+                    cardDocument.getVersion(), cardDocument.getDisplayStyle(),
+                    cardDocument.getDefaultText(), cardDocument.getDefaultLink(), card);
+        } catch (ParserConfigurationException | ParseFailureException | SAXException e) {
+            throw new PayloadException("Unable to parse card document!", e);
+        }
+    }
+
+    /**
      * Create a text message
      * 
      * @param remote Remote contact identifier
@@ -684,6 +1063,74 @@ public class ChatUtils {
         return new ChatMessage(msgId, remote, geoloc.toString(), MimeType.GEOLOC_MESSAGE,
                 timestamp, timestampSent, null);
     }
+
+    /**
+     * Create a vemoticon message
+     *
+     * @param remote Remote contact
+     * @param vemoticon Vemoticon
+     * @param timestamp Local timestamp
+     * @param timestampSent Timestamp sent in payload
+     * @return Vemoticon message
+     */
+    public static ChatMessage createEmoticonMessage(ContactId remote, Emoticon vemoticon,
+            long timestamp, long timestampSent) {
+        String msgId = IdGenerator.generateMessageID();
+        String content = ChatUtils.buildVemoticonDocument(vemoticon);
+        return new ChatMessage(msgId, remote, content, MimeType.VEMOTICON_MESSAGE, timestamp,
+                timestampSent, null);
+    }
+
+    /**
+     * Create a cloudFile message
+     *
+     * @param remote Remote contact
+     * @param cloudFile CloudFile
+     * @param timestamp Local timestamp
+     * @param timestampSent Timestamp sent in payload
+     * @return CloudFile message
+     */
+    public static ChatMessage createCloudFileMessage(ContactId remote, CloudFile cloudFile,
+            long timestamp, long timestampSent) {
+        String msgId = IdGenerator.generateMessageID();
+        String content = ChatUtils.buildCloudFileDocument(cloudFile);
+        return new ChatMessage(msgId, remote, content, MimeType.CLOUDFILE_MESSAGE, timestamp,
+                timestampSent, null);
+    }
+
+    /**
+     * Create a card message
+     *
+     * @param remote Remote contact
+     * @param card Card
+     * @param timestamp Local timestamp
+     * @param timestampSent Timestamp sent in payload
+     * @return Card message
+     */
+    public static ChatMessage createCardMessage(ContactId remote, Card card, long timestamp,
+            long timestampSent) {
+        String msgId = IdGenerator.generateMessageID();
+        String content = ChatUtils.buildCardDocument(card);
+        return new ChatMessage(msgId, remote, content, MimeType.CARD_MESSAGE, timestamp,
+                timestampSent, null);
+    }
+
+    /**
+     * Create a cmRedBag message
+     *
+     * @param remote Remote contact
+     * @param cmRedBag CmRedBag
+     * @param timestamp Local timestamp
+     * @param timestampSent Timestamp sent in payload
+     * @return CmRedBag message
+     */
+//    public static ChatMessage createCmRedBagMessage(ContactId remote, CmRedBag cmRedBag,
+//            long timestamp, long timestampSent) {
+//        String msgId = IdGenerator.generateMessageID();
+//        String content = ChatUtils.buildCmRedBagDocument(cmRedBag);
+//        return new ChatMessage(msgId, remote, content, MimeType.CMREDBAG_MESSAGE, timestamp,
+//                timestampSent, null);
+//    }
 
     /**
      * Get the first message
@@ -816,9 +1263,9 @@ public class ChatUtils {
      * @return Participants based on contacts in the request
      * @throws PayloadException
      */
-    public static Map<ContactId, ParticipantStatus> getParticipants(SipRequest request,
-            ParticipantStatus status) throws PayloadException {
-        Map<ContactId, ParticipantStatus> participants = new HashMap<>();
+    public static Map<ContactId, Status> getParticipants(SipRequest request, Status status)
+            throws PayloadException {
+        Map<ContactId, Status> participants = new HashMap<>();
         String content = request.getContent();
         String boundary = request.getBoundaryContentType();
         Multipart multi = new Multipart(content, boundary);

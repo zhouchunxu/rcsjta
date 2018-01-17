@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +23,7 @@
 
 package com.gsma.rcs.core.ims.security;
 
-import static com.gsma.rcs.utils.StringUtils.UTF8;
+import static com.gsma.rcs.utils.StringUtils.ISO_8859_1;
 
 /**
  * HTTP Digest MD5 authentication (see RFC2617)
@@ -144,6 +145,15 @@ public class HttpDigestMd5Authentication {
      */
     public String getCnonce() {
         return mCnonce;
+    }
+
+    /**
+     * Set the client nonce parameter
+     *
+     * @param cnonce Client nonce
+     */
+    public void setCnonce(String cnonce) {
+        mCnonce = cnonce;
     }
 
     /**
@@ -291,7 +301,7 @@ public class HttpDigestMd5Authentication {
         if (data == null) {
             data = "";
         }
-        byte[] bytes = data.getBytes(UTF8);
+        byte[] bytes = data.getBytes(ISO_8859_1);
         mMd5Digest.update(bytes, 0, bytes.length);
         byte returnValue[] = new byte[mMd5Digest.getDigestSize()];
         mMd5Digest.doFinal(returnValue, 0);

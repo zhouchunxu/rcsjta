@@ -22,11 +22,10 @@ import com.gsma.rcs.service.api.ServerApiPersistentStorageException;
 import com.gsma.rcs.utils.ContactUtil;
 import com.gsma.services.rcs.RcsService.Direction;
 import com.gsma.services.rcs.chat.ChatLog.Message.Content;
-import com.gsma.services.rcs.chat.ChatLog.Message.Content.Status;
 import com.gsma.services.rcs.chat.ChatLog.Message.GroupChatEvent;
-import com.gsma.services.rcs.chat.GroupChat.ParticipantStatus;
-import com.gsma.services.rcs.chat.GroupChat.ReasonCode;
-import com.gsma.services.rcs.chat.GroupChat.State;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.Participant.Status;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.ReasonCode;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.State;
 import com.gsma.services.rcs.contact.ContactId;
 import com.gsma.services.rcs.groupdelivery.GroupDeliveryInfo;
 
@@ -153,11 +152,11 @@ public class GroupChatPersistedStorageAccessor {
         return mContact;
     }
 
-    public Map<ContactId, ParticipantStatus> getParticipants() {
+    public Map<ContactId, Status> getParticipants() {
         return mMessagingLog.getParticipants(mChatId);
     }
 
-    public Map<ContactId, ParticipantStatus> getParticipants(Set<ParticipantStatus> statuses) {
+    public Map<ContactId, Status> getParticipants(Set<Status> statuses) {
         return mMessagingLog.getParticipants(mChatId, statuses);
     }
 
@@ -169,7 +168,7 @@ public class GroupChatPersistedStorageAccessor {
         return mMessagingLog.setGroupChatStateAndReasonCode(mChatId, state, reasonCode);
     }
 
-    public boolean setMessageStatusAndReasonCode(String msgId, Status status,
+    public boolean setMessageStatusAndReasonCode(String msgId, Content.Status status,
             Content.ReasonCode reasonCode) {
         return mMessagingLog.setChatMessageStatusAndReasonCode(msgId, status, reasonCode);
     }
@@ -201,8 +200,8 @@ public class GroupChatPersistedStorageAccessor {
     }
 
     public void addGroupChat(ContactId contact, String subject,
-            Map<ContactId, ParticipantStatus> participants, State state, ReasonCode reasonCode,
-            Direction direction, long timestamp) {
+                             Map<ContactId, Status> participants, State state, ReasonCode reasonCode,
+                             Direction direction, long timestamp) {
         mContact = contact;
         mSubject = subject;
         mDirection = direction;
@@ -222,7 +221,7 @@ public class GroupChatPersistedStorageAccessor {
     }
 
     public void addOutgoingGroupChatMessage(ChatMessage msg, Set<ContactId> recipients,
-            Status status, Content.ReasonCode reasonCode) {
+                                            Content.Status status, Content.ReasonCode reasonCode) {
         mMessagingLog.addOutgoingGroupChatMessage(mChatId, msg, recipients, status, reasonCode);
     }
 
@@ -231,7 +230,7 @@ public class GroupChatPersistedStorageAccessor {
     }
 
     public boolean setParticipantsStateAndReasonCode(
-            Map<ContactId, ParticipantStatus> participants, State state, ReasonCode reasonCode) {
+            Map<ContactId, Status> participants, State state, ReasonCode reasonCode) {
         return mMessagingLog.setGroupChatParticipantsStateAndReasonCode(mChatId, participants,
                 state, reasonCode);
     }

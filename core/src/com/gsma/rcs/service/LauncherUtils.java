@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,13 +35,13 @@ import com.gsma.rcs.provider.settings.RcsSettingsData.TermsAndConditionsResponse
 import com.gsma.rcs.provider.sharing.RichCallHistory;
 import com.gsma.rcs.provisioning.ProvisioningInfo;
 import com.gsma.rcs.provisioning.https.HttpsProvisioningService;
+import com.gsma.rcs.utils.TelephonyUtils;
 import com.gsma.rcs.utils.logger.Logger;
 
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.telephony.TelephonyManager;
 
 /**
  * Launcher utility functions
@@ -116,6 +117,12 @@ public class LauncherUtils {
         if (!rcsSettings.isUserProfileConfigured()) {
             if (logActivated) {
                 sLogger.debug("RCS service not configured");
+            }
+            return;
+        }
+        if (LauncherUtils.getProvisioningExpirationDate(context) < System.currentTimeMillis()) {
+            if (logActivated) {
+                sLogger.debug("RCS service configuration is expired");
             }
             return;
         }
@@ -239,9 +246,7 @@ public class LauncherUtils {
      * @return current user account
      */
     public static String getCurrentUserAccount(Context context) {
-        TelephonyManager mgr = (TelephonyManager) context
-                .getSystemService(Context.TELEPHONY_SERVICE);
-        String currentUserAccount = mgr.getSubscriberId();
+        String currentUserAccount = TelephonyUtils.getCurrentSubscriberId();
         if (currentUserAccount == null) {
             if (sLogger.isActivated()) {
                 sLogger.warn("Cannot get subscriber ID from telephony manager!");

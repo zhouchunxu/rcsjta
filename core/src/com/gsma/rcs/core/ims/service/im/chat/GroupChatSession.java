@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +59,7 @@ import com.gsma.rcs.utils.IdGenerator;
 import com.gsma.rcs.utils.PhoneUtils;
 import com.gsma.rcs.utils.logger.Logger;
 import com.gsma.services.rcs.chat.ChatLog.Message.MimeType;
-import com.gsma.services.rcs.chat.GroupChat.ParticipantStatus;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.Participant.Status;
 import com.gsma.services.rcs.contact.ContactId;
 
 import android.net.Uri;
@@ -88,7 +89,7 @@ public abstract class GroupChatSession extends ChatSession {
      * are persisted in the database. mParticipants should be in sync with the provider at all
      * times.
      */
-    private final Map<ContactId, ParticipantStatus> mParticipants;
+    private final Map<ContactId, Status> mParticipants;
 
     /**
      * Boolean variable indicating that the session is no longer marked as the active one for
@@ -118,8 +119,8 @@ public abstract class GroupChatSession extends ChatSession {
      * @param contactManager the contact manager
      */
     public GroupChatSession(InstantMessagingService imService, ContactId contact, Uri conferenceId,
-            Map<ContactId, ParticipantStatus> participants, RcsSettings rcsSettings,
-            MessagingLog messagingLog, long timestamp, ContactManager contactManager) {
+                            Map<ContactId, Status> participants, RcsSettings rcsSettings,
+                            MessagingLog messagingLog, long timestamp, ContactManager contactManager) {
         super(imService, contact, conferenceId, rcsSettings, messagingLog, null, timestamp,
                 contactManager);
         mMaxParticipants = rcsSettings.getMaxChatParticipants();
@@ -127,7 +128,7 @@ public abstract class GroupChatSession extends ChatSession {
         mConferenceSubscriber = new ConferenceEventSubscribeManager(this, rcsSettings, messagingLog);
         mImsModule = imService.getImsModule();
         setFeatureTags(ChatUtils.getSupportedFeatureTagsForGroupChat(rcsSettings));
-        setAcceptContactTags(ChatUtils.getAcceptContactTagsForGroupChat());
+        setAcceptContactTags(ChatUtils.getAcceptContactTagsForGroupChat(mRcsSettings));
         addAcceptTypes(CpimMessage.MIME_TYPE);
         addWrappedTypes(MimeType.TEXT_MESSAGE);
         addWrappedTypes(IsComposingInfo.MIME_TYPE);
@@ -168,7 +169,7 @@ public abstract class GroupChatSession extends ChatSession {
      * 
      * @return Set of participants associated with the session.
      */
-    public Map<ContactId, ParticipantStatus> getParticipants() {
+    public Map<ContactId, Status> getParticipants() {
         synchronized (mParticipants) {
             return new HashMap<>(mParticipants);
         }
@@ -180,11 +181,11 @@ public abstract class GroupChatSession extends ChatSession {
      * @param status of participants to be returned.
      * @return Set of participants with status participantStatus.
      */
-    public Map<ContactId, ParticipantStatus> getParticipants(ParticipantStatus status) {
+    public Map<ContactId, Status> getParticipants(Status status) {
         synchronized (mParticipants) {
-            Map<ContactId, ParticipantStatus> matchingParticipants = new HashMap<>();
-            for (Map.Entry<ContactId, ParticipantStatus> participant : mParticipants.entrySet()) {
-                ParticipantStatus participantStatus = participant.getValue();
+            Map<ContactId, Status> matchingParticipants = new HashMap<>();
+            for (Map.Entry<ContactId, Status> participant : mParticipants.entrySet()) {
+                Status participantStatus = participant.getValue();
                 if (participantStatus == status) {
                     matchingParticipants.put(participant.getKey(), participantStatus);
                 }
@@ -199,10 +200,10 @@ public abstract class GroupChatSession extends ChatSession {
      * @param statuses of participants to be returned.
      * @return Set of participants which has any one the statuses specified.
      */
-    public Map<ContactId, ParticipantStatus> getParticipants(Set<ParticipantStatus> statuses) {
+    public Map<ContactId, Status> getParticipants(Set<Status> statuses) {
         synchronized (mParticipants) {
-            Map<ContactId, ParticipantStatus> matchingParticipants = new HashMap<>();
-            for (Map.Entry<ContactId, ParticipantStatus> participant : mParticipants.entrySet()) {
+            Map<ContactId, Status> matchingParticipants = new HashMap<>();
+            for (Map.Entry<ContactId, Status> participant : mParticipants.entrySet()) {
                 if (statuses.contains(participant.getValue())) {
                     matchingParticipants.put(participant.getKey(), participant.getValue());
                 }
@@ -217,14 +218,14 @@ public abstract class GroupChatSession extends ChatSession {
      * @param participants Participants
      * @return participants for which status has changed
      */
-    public Map<ContactId, ParticipantStatus> getParticipantsToUpdate(
-            Map<ContactId, ParticipantStatus> participants) {
+    public Map<ContactId, Status> getParticipantsToUpdate(
+            Map<ContactId, Status> participants) {
         synchronized (mParticipants) {
-            Map<ContactId, ParticipantStatus> participantsToUpdate = new HashMap<>();
-            for (Map.Entry<ContactId, ParticipantStatus> participantUpdate : participants
+            Map<ContactId, Status> participantsToUpdate = new HashMap<>();
+            for (Map.Entry<ContactId, Status> participantUpdate : participants
                     .entrySet()) {
                 ContactId contact = participantUpdate.getKey();
-                ParticipantStatus status = participantUpdate.getValue();
+                Status status = participantUpdate.getValue();
                 if (status != mParticipants.get(contact)) {
                     participantsToUpdate.put(contact, status);
                 }
@@ -238,13 +239,13 @@ public abstract class GroupChatSession extends ChatSession {
      * 
      * @param participants Participants
      */
-    public void updateParticipants(Map<ContactId, ParticipantStatus> participants) {
+    public void updateParticipants(Map<ContactId, Status> participants) {
         synchronized (mParticipants) {
-            Map<ContactId, ParticipantStatus> participantsToUpdate = getParticipantsToUpdate(participants);
+            Map<ContactId, Status> participantsToUpdate = getParticipantsToUpdate(participants);
             if (participantsToUpdate.isEmpty()) {
                 return;
             }
-            for (Map.Entry<ContactId, ParticipantStatus> participant : participantsToUpdate
+            for (Map.Entry<ContactId, Status> participant : participantsToUpdate
                     .entrySet()) {
                 mParticipants.put(participant.getKey(), participant.getValue());
             }
@@ -261,8 +262,8 @@ public abstract class GroupChatSession extends ChatSession {
      * @param contacts The contacts that should have their status set.
      * @param status The status to set.
      */
-    private void updateParticipants(final Set<ContactId> contacts, ParticipantStatus status) {
-        Map<ContactId, ParticipantStatus> participants = new HashMap<>();
+    private void updateParticipants(final Set<ContactId> contacts, Status status) {
+        Map<ContactId, Status> participants = new HashMap<>();
         for (ContactId contact : contacts) {
             participants.put(contact, status);
         }
@@ -451,7 +452,7 @@ public abstract class GroupChatSession extends ChatSession {
     public int getMaxNumberOfAdditionalParticipants() {
         synchronized (mParticipants) {
             int currentParticipants = 0;
-            for (ParticipantStatus status : mParticipants.values()) {
+            for (Status status : mParticipants.values()) {
                 switch (status) {
                     case INVITE_QUEUED:
                     case INVITING:
@@ -481,7 +482,7 @@ public abstract class GroupChatSession extends ChatSession {
             if (sLogger.isActivated()) {
                 sLogger.debug("Add " + nbrOfContacts + " participants to the session");
             }
-            updateParticipants(contacts, ParticipantStatus.INVITING);
+            updateParticipants(contacts, Status.INVITING);
             SessionAuthenticationAgent authenticationAgent = getAuthenticationAgent();
             getDialogPath().incrementCseq();
             if (sLogger.isActivated()) {
@@ -523,25 +524,25 @@ public abstract class GroupChatSession extends ChatSession {
                     if (sLogger.isActivated()) {
                         sLogger.debug("20x OK response received");
                     }
-                    updateParticipants(contacts, ParticipantStatus.INVITED);
+                    updateParticipants(contacts, Status.INVITED);
                 } else {
                     if (sLogger.isActivated()) {
                         sLogger.debug("REFER has failed (" + statusCode + ")");
                     }
-                    updateParticipants(contacts, ParticipantStatus.FAILED);
+                    updateParticipants(contacts, Status.FAILED);
                 }
 
             } else if ((statusCode >= 200) && (statusCode < 300)) {
                 if (sLogger.isActivated()) {
                     sLogger.debug("20x OK response received");
                 }
-                updateParticipants(contacts, ParticipantStatus.INVITED);
+                updateParticipants(contacts, Status.INVITED);
 
             } else {
                 if (sLogger.isActivated()) {
                     sLogger.debug("No response received");
                 }
-                updateParticipants(contacts, ParticipantStatus.FAILED);
+                updateParticipants(contacts, Status.FAILED);
             }
         } catch (InvalidArgumentException | ParseException e) {
             throw new PayloadException("REFER request has failed for contacts : " + contacts, e);

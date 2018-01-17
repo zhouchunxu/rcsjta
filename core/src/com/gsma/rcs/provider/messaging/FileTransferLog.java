@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,7 +153,7 @@ public class FileTransferLog implements IFileTransferLog {
     }
 
     @Override
-    public void addOneToOneFileTransfer(String fileTransferId, ContactId contact,
+    public void addOneToOneFileTransfer(String fileTransferId, String chatId, ContactId contact,
             Direction direction, MmContent content, MmContent fileIcon, State state,
             ReasonCode reasonCode, long timestamp, long timestampSent, long fileExpiration,
             long fileIconExpiration) {
@@ -196,6 +197,75 @@ public class FileTransferLog implements IFileTransferLog {
         values.put(FileTransferData.KEY_EXPIRED_DELIVERY, 0);
         values.put(FileTransferData.KEY_FILE_EXPIRATION, fileExpiration);
         mLocalContentResolver.insert(FileTransferData.CONTENT_URI, values);
+    }
+
+    @Override
+    public void addOutgoingOneToManyFileTransfer(String fileTransferId, String chatId,
+            Set<ContactId> recipients, MmContent content, MmContent fileIcon, State state,
+            ReasonCode reasonCode, long timestamp, long timestampSent, long fileExpiration,
+            long fileIconExpiration) {
+        if (sLogger.isActivated()) {
+            sLogger.debug("addOutgoingOneToManyFileTransfer: Id=" + fileTransferId + ", chatId="
+                    + chatId + " filename=" + content.getName() + ", size=" + content.getSize()
+                    + ", MIME=" + content.getEncoding() + ", state=" + state + ", reasonCode="
+                    + reasonCode + ", timestamp=" + timestamp + ", timestampSent=" + timestampSent);
+        }
+        ContentValues values = new ContentValues();
+        values.put(FileTransferData.KEY_FT_ID, fileTransferId);
+        values.put(FileTransferData.KEY_CHAT_ID, chatId);
+        values.put(FileTransferData.KEY_CONVERSATION_ID, chatId);
+        values.put(FileTransferData.KEY_CONTACT, "");//TODO
+        values.put(FileTransferData.KEY_FILE, Uri.decode(content.getUri().toString()));
+        values.put(FileTransferData.KEY_FILENAME, content.getName());
+        values.put(FileTransferData.KEY_MIME_TYPE, content.getEncoding());
+        values.put(FileTransferData.KEY_DIRECTION, Direction.OUTGOING.toInt());
+        values.put(FileTransferData.KEY_TRANSFERRED, 0);
+        values.put(FileTransferData.KEY_FILESIZE, content.getSize());
+        values.put(FileTransferData.KEY_READ_STATUS, ReadStatus.UNREAD.toInt());
+        values.put(FileTransferData.KEY_DELIVERY_MESSAGE_ID, "");//TODO
+        values.put(FileTransferData.KEY_TIMESTAMP, timestamp);
+        values.put(FileTransferData.KEY_TIMESTAMP_SENT, timestampSent);
+        values.put(FileTransferData.KEY_TIMESTAMP_DELIVERED, 0);
+        values.put(FileTransferData.KEY_TIMESTAMP_DISPLAYED, 0);
+        values.put(FileTransferData.KEY_DELIVERY_EXPIRATION, 0);
+        values.put(FileTransferData.KEY_EXPIRED_DELIVERY, 0);
+        values.put(FileTransferData.KEY_STATE, state.toInt());
+        values.put(FileTransferData.KEY_REASON_CODE, reasonCode.toInt());
+//        if (thumbnail != null) {
+//            values.put(FileTransferData.KEY_FILEICON, thumbnail.getUri().toString());
+//            values.put(FileTransferData.KEY_FILEICON_MIME_TYPE, thumbnail.getEncoding());
+//        }
+        values.put(FileTransferData.KEY_FILEICON_EXPIRATION, FileTransferData.UNKNOWN_EXPIRATION);
+        values.put(FileTransferData.KEY_FILE_EXPIRATION, FileTransferData.UNKNOWN_EXPIRATION);
+        if (content.isPlayable()) {
+            values.put(FileTransferData.KEY_DISPOSITION, FileTransfer.Disposition.RENDER.toInt());
+        } else {
+            values.put(FileTransferData.KEY_DISPOSITION, FileTransfer.Disposition.ATTACH.toInt());
+        }
+        values.put(FileTransferData.KEY_DURATION, content.getTimelen());
+        values.put(FileTransferData.KEY_SILENCE, 0);
+        mLocalContentResolver.insert(FileTransferData.CONTENT_URI, values);
+
+        // TODO: 2016/11/30 tmply use group chat delivery info log interface
+        try {
+            for (ContactId contact : recipients) {
+                /* Add entry with delivered and displayed timestamps set to 0. */
+                mGroupChatDeliveryInfoLog.addGroupChatDeliveryInfoEntry(chatId, contact,
+                        fileTransferId, GroupDeliveryInfo.Status.NOT_DELIVERED,
+                        GroupDeliveryInfo.ReasonCode.UNSPECIFIED, 0, 0);
+            }
+        } catch (Exception e) {
+            if (sLogger.isActivated()) {
+                sLogger.error("One to many file transfer with fileTransferId '" + fileTransferId
+                        + "' could not be added to database!", e);
+            }
+            mLocalContentResolver.delete(
+                    Uri.withAppendedPath(FileTransferData.CONTENT_URI, fileTransferId), null, null);
+            mLocalContentResolver.delete(
+                    Uri.withAppendedPath(GroupDeliveryInfoData.CONTENT_URI, fileTransferId), null,
+                    null);
+            /* TODO: Throw exception */
+        }
     }
 
     @Override
@@ -722,6 +792,11 @@ public class FileTransferLog implements IFileTransferLog {
         } finally {
             CursorUtil.close(cursor);
         }
+    }
+
+    @Override
+    public boolean isOneToManyFileTransfer(String fileTransferId) {
+        return false;
     }
 
     @Override

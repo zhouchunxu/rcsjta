@@ -13,7 +13,7 @@
  * <p>
  * The RCS API offers the following service API:<br>
  * - Capability API: contact capabilities discovery.<br>
- * - Chat API: 1-1 chat and group chat.<br>
+ * - Chat API: 1-1/1-N chat and group chat.<br>
  * - File Transfer API: transfer a file.<br>
  * - Video Share API: live video sharing during a CS call.<br>
  * - Image Share API: image sharing during a CS call.<br>

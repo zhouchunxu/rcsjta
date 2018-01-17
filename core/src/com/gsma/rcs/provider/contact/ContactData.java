@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +68,11 @@ import android.net.Uri;
      * IM/Chat capability. Values: 1 (true), 0 (false)
      */
     /* package private */static final String KEY_CAPABILITY_IM_SESSION = CapabilitiesLog.CAPABILITY_IM_SESSION;
+
+    /**
+     * Standalone messaging capability. Values: 1 (true), 0 (false)
+     */
+    /* package private */static final String KEY_CAPABILITY_STANDALONE_MESSAGING = CapabilitiesLog.CAPABILITY_STANDALONE_MESSAGING;
 
     /**
      * Geolocation push capability. Values: 1 (true), 0 (false)

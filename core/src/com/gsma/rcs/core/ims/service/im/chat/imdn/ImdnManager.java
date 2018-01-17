@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications AB.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,6 +106,13 @@ public class ImdnManager extends Thread {
      * Should we request one to one delivery displayed reports
      */
     public boolean isRequestOneToOneDeliveryDisplayedReportsEnabled() {
+        return mRcsSettings.isImReportsActivated() && !mRcsSettings.isAlbatrosRelease();
+    }
+
+    /**
+     * Should we request one to many delivery displayed reports
+     */
+    public boolean isRequestOneToManyDeliveryDisplayedReportsEnabled() {
         return mRcsSettings.isImReportsActivated() && !mRcsSettings.isAlbatrosRelease();
     }
 
@@ -220,8 +228,9 @@ public class ImdnManager extends Thread {
                 if (sLogger.isActivated()) {
                     sLogger.info("Send second MESSAGE");
                 }
-                SipRequest msg = SipMessageFactory.createMessage(dialogPath,
-                        FeatureTags.FEATURE_OMA_IM, CpimMessage.MIME_TYPE, cpim.getBytes(UTF8));
+                String featureTag = ChatUtils.getFeatureTagForPagerMode(mRcsSettings);
+                SipRequest msg = SipMessageFactory.createMessage(dialogPath, featureTag,
+                        CpimMessage.MIME_TYPE, cpim.getBytes(UTF8));
                 /* Set the Authorization header */
                 authenticationAgent.setProxyAuthorizationHeader(msg);
                 ctx = mImService.getImsModule().getSipManager().sendSipMessageAndWait(msg);
@@ -281,8 +290,9 @@ public class ImdnManager extends Thread {
             if (sLogger.isActivated()) {
                 sLogger.info("Send first MESSAGE");
             }
-            SipRequest msg = SipMessageFactory.createMessage(dialogPath,
-                    FeatureTags.FEATURE_OMA_IM, CpimMessage.MIME_TYPE, cpim.getBytes(UTF8));
+            String featureTag = ChatUtils.getFeatureTagForPagerMode(mRcsSettings);
+            SipRequest msg = SipMessageFactory.createMessage(dialogPath, featureTag,
+                    CpimMessage.MIME_TYPE, cpim.getBytes(UTF8));
             // Send MESSAGE request
             SipTransactionContext ctx = mImService.getImsModule().getSipManager()
                     .sendSipMessageAndWait(msg);

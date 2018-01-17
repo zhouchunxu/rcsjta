@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications AB.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +23,7 @@
 
 package com.gsma.rcs.core.ims.service.im.filetransfer;
 
+import static com.gsma.rcs.utils.StringUtils.ISO_8859_1;
 import static com.gsma.rcs.utils.StringUtils.UTF8;
 import static com.gsma.rcs.utils.StringUtils.UTF8_STR;
 
@@ -30,6 +32,7 @@ import com.gsma.rcs.core.ParseFailureException;
 import com.gsma.rcs.core.content.ContentManager;
 import com.gsma.rcs.core.content.MmContent;
 import com.gsma.rcs.core.ims.network.sip.Multipart;
+import com.gsma.rcs.core.ims.network.sip.SipUtils;
 import com.gsma.rcs.core.ims.protocol.PayloadException;
 import com.gsma.rcs.core.ims.protocol.sip.SipRequest;
 import com.gsma.rcs.core.ims.service.im.chat.ChatMessage;
@@ -50,9 +53,9 @@ import com.gsma.rcs.utils.logger.Logger;
 import com.gsma.services.rcs.filetransfer.FileTransfer.Disposition;
 
 import android.graphics.Bitmap;
-import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
+import android.graphics.Bitmap.CompressFormat;
 import android.net.Uri;
 
 import org.xml.sax.SAXException;
@@ -88,6 +91,16 @@ public class FileTransferUtils {
     public static boolean isFileTransferHttpType(String mime) {
         return mime != null
                 && mime.toLowerCase().startsWith(FileTransferHttpInfoDocument.MIME_TYPE);
+    }
+
+    /**
+     * Is a file transfer thumbnail supported
+     *
+     * @param mime MIME type
+     * @return Boolean
+     */
+    public static boolean isFileiconSupported(String mime) {
+        return mime != null && (MimeManager.isImageType(mime) || MimeManager.isVideoType(mime));
     }
 
     /**
@@ -192,7 +205,7 @@ public class FileTransferUtils {
             throws FileAccessException {
         MmContent result = null;
         try {
-            String content = request.getContent();
+            String content = new String(request.getContentBytes(), ISO_8859_1);
             String boundary = request.getBoundaryContentType();
             Multipart multi = new Multipart(content, boundary);
             if (!multi.isMultipart()) {
@@ -210,7 +223,10 @@ public class FileTransferUtils {
             String iconName = buildFileiconUrl(ChatUtils.getContributionId(request), mimeType);
             Uri fileIconUri = Uri.fromFile(new File(rcsSettings.getFileIconRootDirectory().concat(
                     iconName)));
-            byte[] fileIconData = Base64.decodeBase64(mimeType.getBytes(UTF8));
+            byte[] fileIconData = data.getBytes(ISO_8859_1);
+            if ("base64".equals(multi.getPart("Content-Transfer-Encoding"))) {
+                fileIconData = Base64.decodeBase64(fileIconData);
+            }
             result = ContentManager.createMmContent(fileIconUri, mimeType, fileIconData.length,
                     iconName);
             result.writeData2File(fileIconData);
@@ -221,6 +237,26 @@ public class FileTransferUtils {
                 result.closeFile();
             }
         }
+    }
+
+    /**
+     * Returns the file transfer ID from a SIP request
+     *
+     * @param request Request
+     * @return File transfer ID
+     * @throws PayloadException
+     */
+    public static String getFileTransferId(SipRequest request) throws PayloadException {
+        /* Read ID from multipart content */
+        String content = request.getContent();
+        SipUtils.assertContentIsNotNull(content, request);
+        int index = content.indexOf("file-transfer-id");
+        if (index == -1) {
+            return null;
+        }
+        index = index + "file-transfer-id".length() + 1;
+        String part = content.substring(index);
+        return part.substring(0, part.indexOf(SipUtils.CRLF)).trim();
     }
 
     /**

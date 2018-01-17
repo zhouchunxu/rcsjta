@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +27,7 @@ import static com.gsma.rcs.utils.StringUtils.UTF8;
 
 import com.gsma.rcs.core.FileAccessException;
 import com.gsma.rcs.core.ims.network.NetworkException;
+import com.gsma.rcs.core.ims.network.sip.FeatureTags;
 import com.gsma.rcs.core.ims.network.sip.Multipart;
 import com.gsma.rcs.core.ims.network.sip.SipMessageFactory;
 import com.gsma.rcs.core.ims.network.sip.SipUtils;
@@ -36,13 +38,16 @@ import com.gsma.rcs.core.ims.service.im.InstantMessagingService;
 import com.gsma.rcs.provider.contact.ContactManager;
 import com.gsma.rcs.provider.messaging.MessagingLog;
 import com.gsma.rcs.provider.settings.RcsSettings;
+import com.gsma.rcs.utils.StringUtils;
 import com.gsma.rcs.utils.logger.Logger;
-import com.gsma.services.rcs.chat.GroupChat.ParticipantStatus;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.Participant.Status;
 import com.gsma.services.rcs.contact.ContactId;
 
 import android.net.Uri;
 import android.text.TextUtils;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.text.ParseException;
 import java.util.Map;
 
@@ -74,10 +79,10 @@ public class OriginatingAdhocGroupChatSession extends GroupChatSession {
      * @param rcsSettings RCS settings
      * @param messagingLog Messaging log
      * @param timestamp Local timestamp for the session
-     * @param contactManager
+     * @param contactManager The contact manager accessor
      */
     public OriginatingAdhocGroupChatSession(InstantMessagingService imService, Uri conferenceId,
-            String subject, Map<ContactId, ParticipantStatus> participantsToInvite,
+            String subject, Map<ContactId, Status> participantsToInvite,
             RcsSettings rcsSettings, MessagingLog messagingLog, long timestamp,
             ContactManager contactManager) {
         super(imService, null, conferenceId, participantsToInvite, rcsSettings, messagingLog,
@@ -91,6 +96,7 @@ public class OriginatingAdhocGroupChatSession extends GroupChatSession {
 
         String id = ContributionIdGenerator.getContributionId(getDialogPath().getCallId());
         setContributionID(id);
+        setConversationID(id);
     }
 
     @Override
@@ -184,10 +190,15 @@ public class OriginatingAdhocGroupChatSession extends GroupChatSession {
                 invite.addHeader(SubjectHeader.NAME, getSubject());
             }
             invite.addHeader(RequireHeader.NAME, "recipient-list-invite");
+            if (mRcsSettings.isCpmMsgTech()) {
+                invite.addHeader(SipUtils.HEADER_P_PREFERRED_SERVICE, URLDecoder.decode(
+                        FeatureTags.FEATURE_OMA_CPM_SESSION_GROUP, StringUtils.UTF8_STR));
+                invite.addHeader(ChatUtils.HEADER_CONVERSATION_ID, getConversationID());
+            }
             invite.addHeader(ChatUtils.HEADER_CONTRIBUTION_ID, getContributionID());
             return invite;
 
-        } catch (ParseException e) {
+        } catch (ParseException | UnsupportedEncodingException e) {
             throw new PayloadException("Failed to create invite request!", e);
         }
     }

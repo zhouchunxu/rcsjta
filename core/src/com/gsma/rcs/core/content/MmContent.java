@@ -51,6 +51,10 @@ public abstract class MmContent {
 
     private boolean mPlayable = false;
 
+    private long mTimelen = -1;
+
+    private String mDeliveryMsgId;
+
     /**
      * Stream to write received data directly to file.
      */
@@ -189,6 +193,42 @@ public abstract class MmContent {
     }
 
     /**
+     * Get the time length
+     *
+     * @return timelen
+     */
+    public long getTimelen() {
+        return mTimelen;
+    }
+
+    /**
+     * Set the time length
+     *
+     * @param timelen the time length
+     */
+    public void setTimelen(long timelen) {
+        this.mTimelen = timelen;
+    }
+
+    /**
+     * Get the delivery message id
+     *
+     * @return deliveryMsgId
+     */
+    public String getDeliveryMsgId() {
+        return mDeliveryMsgId;
+    }
+
+    /**
+     * Set the delivery message id
+     *
+     * @param deliveryMsgId the delivery message id of file
+     */
+    public void setDeliveryMsgId(String deliveryMsgId) {
+        this.mDeliveryMsgId = deliveryMsgId;
+    }
+
+    /**
      * Returns the string representation of a content
      * 
      * @return String
@@ -207,7 +247,7 @@ public abstract class MmContent {
         try {
             if (mOut == null) {
                 File destination = new File(mUri.getPath());
-                FileOutputStream fos = new FileOutputStream(destination);
+                FileOutputStream fos = new FileOutputStream(destination, true);
                 /* To optimize I/O set buffer size to 8 kBytes */
                 mOut = new BufferedOutputStream(fos, 8 * 1024);
             }

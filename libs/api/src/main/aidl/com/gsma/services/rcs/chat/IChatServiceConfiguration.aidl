@@ -8,26 +8,32 @@ interface IChatServiceConfiguration {
 	long getIsComposingTimeout();
 
 	long getGeolocExpirationTime();
-	
+
 	int getGeolocLabelMaxLength();
-	
+
 	int getGroupChatMaxParticipants();
-	
+
 	int getGroupChatMessageMaxLength();
-	
+
 	int getGroupChatMinParticipants();
-	
+
 	int getGroupChatSubjectMaxLength();
-	
+
 	int getOneToOneChatMessageMaxLength();
 
+	int getStandaloneMessageMaxLength();
+
+	boolean isStandaloneMessagingSupported();
+
+	//boolean isChatSupported();
+
 	boolean isChatWarnSF();
-	
+
 	boolean isGroupChatSupported();
-	
+
 	boolean isRespondToDisplayReportsEnabled();
-	
+
 	boolean isSmsFallback();
-	
+
 	void setRespondToDisplayReports(in boolean enable);
 }

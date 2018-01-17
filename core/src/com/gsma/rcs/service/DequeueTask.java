@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2015 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -134,6 +135,50 @@ public abstract class DequeueTask implements Runnable {
                 mLogger.debug(new StringBuilder(
                         "Cannot dequeue one-to-one chat messages right now as IM session capabilities are not supported for remote contact ")
                         .append(contact).append(" and IM_CAP_ALWAYS_ON is false!").toString());
+            }
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Check if dequeueing and sending standalone messages is allowed
+     *
+     * @return boolean
+     */
+    protected boolean isAllowedToDequeueStandaloneMessage() {
+        return true;
+    }
+
+    /**
+     * Check if dequeueing and sending of one to one bar messages to specified recipent is
+     * allowed
+     *
+     * @param contact Remote contact
+     * @return boolean
+     */
+    protected boolean isAllowedToDequeueOneToOneBarIm(ContactId contact) {
+        Capabilities remoteCapabilities = mContactManager.getContactCapabilities(contact);
+        if (remoteCapabilities == null /* || !remoteCapabilities.isBarCycleSupported() */) {
+            if (mLogger.isActivated()) {
+                mLogger.debug(new StringBuilder(
+                        "Cannot dequeue one-to-one burn-after-reading instant messages right now as barcycle capabilities are not supported for remote contact ")
+                        .append(contact).append("!").toString());
+            }
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Check if it is possible to dequeue standalone messages
+     *
+     * @return boolean
+     */
+    protected boolean isPossibleToDequeueStandaloneMessage() {
+        if (!mRcsSettings.isStandaloneMessagingSupported()) {
+            if (mLogger.isActivated()) {
+                mLogger.debug("Cannot dequeue standalone messages as standalone messaging feature is not activated!");
             }
             return false;
         }
@@ -277,6 +322,18 @@ public abstract class DequeueTask implements Runnable {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Set standalone message as failed
+     * 
+     * @param chatId Chat id
+     * @param msgId Message ID
+     * @param mimeType mime type
+     */
+    protected void setStandaloneMessageAsFailedDequeue(String chatId, String msgId, String mimeType) {
+        mChatService.setStandaloneMessageStatusAndReasonCode(chatId, msgId, mimeType,
+                Status.FAILED, Content.ReasonCode.FAILED_SEND);
     }
 
     /**

@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2014 Sony Mobile Communications Inc.
  * Copyright (C) 2010-2016 Orange.
+ * Copyright (C) 2017 China Mobile.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,11 +18,10 @@
 
 package com.gsma.rcs.service.broadcaster;
 
+import com.gsma.services.rcs.chat.ChatLog;
 import com.gsma.services.rcs.chat.ChatLog.Message.Content.ReasonCode;
-import com.gsma.services.rcs.chat.ChatLog.Message.Content.Status;
-import com.gsma.services.rcs.chat.GroupChat;
-import com.gsma.services.rcs.chat.GroupChat.ParticipantStatus;
-import com.gsma.services.rcs.chat.GroupChat.State;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.Participant.Status;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.State;
 import com.gsma.services.rcs.contact.ContactId;
 import com.gsma.services.rcs.groupdelivery.GroupDeliveryInfo;
 
@@ -32,17 +32,23 @@ import java.util.Set;
  */
 public interface IGroupChatEventBroadcaster {
 
-    void broadcastMessageStatusChanged(String chatId, String mimeType, String msgId, Status status,
+    void broadcastMessageStatusChanged(String chatId, String mimeType, String msgId, com.gsma.services.rcs.chat.ChatLog.Message.Content.Status status,
             ReasonCode reasonCode);
 
     void broadcastMessageGroupDeliveryInfoChanged(String chatId, ContactId contact,
             String mimeType, String msgId, GroupDeliveryInfo.Status status,
             GroupDeliveryInfo.ReasonCode reasonCode);
 
-    void broadcastParticipantStatusChanged(String chatId, ContactId contact,
-            ParticipantStatus status);
+    void broadcastSubjectChanged(String chatId, String subject);
 
-    void broadcastStateChanged(String chatId, State state, GroupChat.ReasonCode reasonCode);
+    void broadcastOwnershipChanged(String chatId, ContactId contact);
+
+    void broadcastParticipantAliasChanged(String chatId, ContactId contact, String alias);
+
+    void broadcastParticipantStatusChanged(String chatId, ContactId contact,
+            Status status);
+
+    void broadcastStateChanged(String chatId, State state, ChatLog.GroupChat.ReasonCode reasonCode);
 
     void broadcastComposingEvent(String chatId, ContactId contact, boolean status);
 

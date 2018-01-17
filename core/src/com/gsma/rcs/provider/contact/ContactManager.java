@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +44,7 @@ import static com.gsma.rcs.provider.contact.ContactData.KEY_CAPABILITY_IP_VIDEO_
 import static com.gsma.rcs.provider.contact.ContactData.KEY_CAPABILITY_IP_VOICE_CALL;
 import static com.gsma.rcs.provider.contact.ContactData.KEY_CAPABILITY_PRESENCE_DISCOVERY;
 import static com.gsma.rcs.provider.contact.ContactData.KEY_CAPABILITY_SOCIAL_PRESENCE;
+import static com.gsma.rcs.provider.contact.ContactData.KEY_CAPABILITY_STANDALONE_MESSAGING;
 import static com.gsma.rcs.provider.contact.ContactData.KEY_CAPABILITY_TIMESTAMP_LAST_REQUEST;
 import static com.gsma.rcs.provider.contact.ContactData.KEY_CAPABILITY_TIMESTAMP_LAST_RESPONSE;
 import static com.gsma.rcs.provider.contact.ContactData.KEY_CAPABILITY_VIDEO_SHARE;
@@ -85,8 +87,8 @@ import com.gsma.rcs.provider.contact.ContactData.AggregationData;
 import com.gsma.rcs.provider.settings.RcsSettings;
 import com.gsma.rcs.utils.CloseableUtils;
 import com.gsma.rcs.utils.ContactUtil;
-import com.gsma.rcs.utils.ContactUtil.PhoneNumber;
 import com.gsma.rcs.utils.StringUtils;
+import com.gsma.rcs.utils.ContactUtil.PhoneNumber;
 import com.gsma.rcs.utils.logger.Logger;
 import com.gsma.services.rcs.capability.CapabilitiesLog;
 import com.gsma.services.rcs.contact.ContactId;
@@ -106,16 +108,16 @@ import android.net.Uri;
 import android.os.RemoteException;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.AggregationExceptions;
+import android.provider.ContactsContract.Data;
+import android.provider.ContactsContract.Groups;
+import android.provider.ContactsContract.RawContacts;
+import android.provider.ContactsContract.StatusUpdates;
 import android.provider.ContactsContract.CommonDataKinds.GroupMembership;
 import android.provider.ContactsContract.CommonDataKinds.Im;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.CommonDataKinds.Photo;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.provider.ContactsContract.CommonDataKinds.Website;
-import android.provider.ContactsContract.Data;
-import android.provider.ContactsContract.Groups;
-import android.provider.ContactsContract.RawContacts;
-import android.provider.ContactsContract.StatusUpdates;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -127,8 +129,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 
 /**
  * Contains utility methods for interfacing with the Android SDK ContactProvider and the RCS contact
@@ -178,6 +180,11 @@ public final class ContactManager {
     private static final String MIMETYPE_CAPABILITY_VIDEO_SHARE = ContactProvider.MIME_TYPE_VIDEO_SHARE;
 
     /**
+     * MIME type for RCS_SM (standalone messaging) capability
+     */
+    private static final String MIMETYPE_CAPABILITY_STANDALONE_MESSAGING = ContactProvider.MIME_TYPE_STANDALONE_MESSAGING;
+
+    /**
      * MIME type for RCS_IM (IM session) capability
      */
     private static final String MIMETYPE_CAPABILITY_IM_SESSION = ContactProvider.MIME_TYPE_IM_SESSION;
@@ -220,6 +227,7 @@ public final class ContactManager {
         REGISTRATION_STATE(MIMETYPE_REGISTRATION_STATE),
         CAPABILITY_IMAGE_SHARE(MIMETYPE_CAPABILITY_IMAGE_SHARE),
         CAPABILITY_VIDEO_SHARE(MIMETYPE_CAPABILITY_VIDEO_SHARE),
+        CAPABILITY_STANDALONE_MESSAGING(MIMETYPE_CAPABILITY_STANDALONE_MESSAGING),
         CAPABILITY_IM_SESSION(MIMETYPE_CAPABILITY_IM_SESSION),
         CAPABILITY_FILE_TRANSFER(MIMETYPE_CAPABILITY_FILE_TRANSFER),
         CAPABILITY_GEOLOCATION_PUSH(MIMETYPE_CAPABILITY_GEOLOCATION_PUSH),
@@ -359,6 +367,9 @@ public final class ContactManager {
     private static final String SEL_DATA_MIMETYPE_CAPABILITY_IM_SESSION = Data.MIMETYPE + "='"
             + MIMETYPE_CAPABILITY_IM_SESSION + "'";
 
+    private static final String SEL_DATA_MIMETYPE_CAPABILITY_STANDALONE_MESSAGING = Data.MIMETYPE + "='"
+            + MIMETYPE_CAPABILITY_STANDALONE_MESSAGING + "'";
+
     private static final String SEL_DATA_MIMETYPE_CAPABILITY_IMAGE_SHARING = Data.MIMETYPE + "='"
             + MIMETYPE_CAPABILITY_IMAGE_SHARE + "'";
 
@@ -400,9 +411,10 @@ public final class ContactManager {
             + MIMETYPE_BLOCKING_STATE + "','" + MIMETYPE_BLOCKING_TIMESTAMP + "','"
             + MIMETYPE_NUMBER + "','" + MIMETYPE_CAPABILITY_IMAGE_SHARE + "','"
             + MIMETYPE_CAPABILITY_VIDEO_SHARE + "','" + MIMETYPE_CAPABILITY_IP_VOICE_CALL + "','"
-            + MIMETYPE_CAPABILITY_IP_VIDEO_CALL + "','" + MIMETYPE_CAPABILITY_IM_SESSION + "','"
-            + MIMETYPE_CAPABILITY_FILE_TRANSFER + "','" + MIMETYPE_CAPABILITY_GEOLOCATION_PUSH
-            + "','" + MIMETYPE_CAPABILITY_EXTENSIONS + "')";
+            + MIMETYPE_CAPABILITY_IP_VIDEO_CALL + "','" + MIMETYPE_CAPABILITY_STANDALONE_MESSAGING
+            + "','" + MIMETYPE_CAPABILITY_IM_SESSION + "','" + MIMETYPE_CAPABILITY_FILE_TRANSFER
+            + "','" + MIMETYPE_CAPABILITY_GEOLOCATION_PUSH + "','" + MIMETYPE_CAPABILITY_EXTENSIONS
+            + "')";
 
     private static final String RCS_CONTACT_GROUP_NAME = RcsAccountManager.ACCOUNT_MANAGER_TYPE;
 
@@ -519,6 +531,7 @@ public final class ContactManager {
         values.put(KEY_CAPABILITY_CS_VIDEO, newCapa.isCsVideoSupported());
         values.put(KEY_CAPABILITY_FILE_TRANSFER, newCapa.isFileTransferMsrpSupported());
         values.put(KEY_CAPABILITY_IMAGE_SHARE, newCapa.isImageSharingSupported());
+        values.put(KEY_CAPABILITY_STANDALONE_MESSAGING, newCapa.isStandaloneMessagingSupported());
         values.put(KEY_CAPABILITY_IM_SESSION, newCapa.isImSessionSupported());
         values.put(KEY_CAPABILITY_VIDEO_SHARE, newCapa.isVideoSharingSupported());
         values.put(KEY_CAPABILITY_GEOLOC_PUSH, newCapa.isGeolocationPushSupported());
@@ -675,6 +688,12 @@ public final class ContactManager {
                 op = modifyMimeTypeForContact(rcsRawContactId, contact,
                         MIMETYPE_CAPABILITY_IMAGE_SHARE, newCapa.isImageSharingSupported(),
                         oldCapa.isImageSharingSupported());
+                if (op != null) {
+                    ops.add(op);
+                }
+                op = modifyMimeTypeForContact(rcsRawContactId, contact,
+                        MIMETYPE_CAPABILITY_STANDALONE_MESSAGING, newCapa.isStandaloneMessagingSupported(),
+                        oldCapa.isStandaloneMessagingSupported());
                 if (op != null) {
                     ops.add(op);
                 }
@@ -872,6 +891,8 @@ public final class ContactManager {
                         KEY_CAPABILITY_FILE_TRANSFER));
                 capaBuilder.setImageSharing(isCapabilitySupported(cursor,
                         KEY_CAPABILITY_IMAGE_SHARE));
+                capaBuilder.setStandaloneMessaging(isCapabilitySupported(cursor,
+                        KEY_CAPABILITY_STANDALONE_MESSAGING));
                 capaBuilder.setImSession(isCapabilitySupported(cursor, KEY_CAPABILITY_IM_SESSION));
                 capaBuilder.setPresenceDiscovery(isCapabilitySupported(cursor,
                         KEY_CAPABILITY_PRESENCE_DISCOVERY));
@@ -1044,6 +1065,7 @@ public final class ContactManager {
                 values.put(KEY_CAPABILITY_CS_VIDEO, 0);
                 values.put(KEY_CAPABILITY_IMAGE_SHARE, 0);
                 values.put(KEY_CAPABILITY_VIDEO_SHARE, 0);
+                values.put(KEY_CAPABILITY_STANDALONE_MESSAGING, 0);
                 values.put(KEY_CAPABILITY_IM_SESSION, 0);
                 values.put(KEY_CAPABILITY_FILE_TRANSFER, 0);
                 values.put(KEY_CAPABILITY_PRESENCE_DISCOVERY, 0);
@@ -1642,6 +1664,9 @@ public final class ContactManager {
         } else if (mimeType.equalsIgnoreCase(MIMETYPE_CAPABILITY_IM_SESSION)) {
             return mContext.getString(R.string.rcs_core_contact_im_session_summary);
 
+        } else if (mimeType.equalsIgnoreCase(MIMETYPE_CAPABILITY_STANDALONE_MESSAGING)) {
+            return mContext.getString(R.string.rcs_core_contact_standalone_messaging_summary);
+
         } else if (mimeType.equalsIgnoreCase(MIMETYPE_CAPABILITY_IP_VOICE_CALL)) {
             return mContext.getString(R.string.rcs_core_contact_ip_voice_call_summary);
 
@@ -1669,6 +1694,9 @@ public final class ContactManager {
 
         } else if (mimeType.equalsIgnoreCase(MIMETYPE_CAPABILITY_IM_SESSION)) {
             return mContext.getString(R.string.rcs_core_contact_im_session_details);
+
+        } else if (mimeType.equalsIgnoreCase(MIMETYPE_CAPABILITY_STANDALONE_MESSAGING)) {
+            return mContext.getString(R.string.rcs_core_contact_standalone_messaging_details);
 
         } else if (mimeType.equalsIgnoreCase(MIMETYPE_CAPABILITY_IP_VOICE_CALL)) {
             return mContext.getString(R.string.rcs_core_contact_ip_voice_call_details);
@@ -1985,6 +2013,10 @@ public final class ContactManager {
             if (capabilities.isImSessionSupported()) {
                 ops.add(createMimeTypeForContact(rawContactRefIms, contact,
                         MIMETYPE_CAPABILITY_IM_SESSION));
+            }
+            if (capabilities.isStandaloneMessagingSupported()) {
+                ops.add(createMimeTypeForContact(rawContactRefIms, contact,
+                        MIMETYPE_CAPABILITY_STANDALONE_MESSAGING));
             }
             if (capabilities.isVideoSharingSupported()) {
                 ops.add(createMimeTypeForContact(rawContactRefIms, contact,
@@ -2593,6 +2625,14 @@ public final class ContactManager {
         ops.add(ContentProviderOperation.newUpdate(Data.CONTENT_URI)
                 .withSelection(SEL_DATA_MIMETYPE_CAPABILITY_IM_SESSION, null).withValues(values)
                 .build());
+
+        /* Update standalone messaging menu */
+        values.clear();
+        values.put(Data.DATA2, getMimeTypeDescriptionSummary(MIMETYPE_CAPABILITY_STANDALONE_MESSAGING));
+        values.put(Data.DATA3, getMimeTypeDescriptionDetails(MIMETYPE_CAPABILITY_STANDALONE_MESSAGING));
+        ops.add(ContentProviderOperation.newUpdate(Data.CONTENT_URI)
+                .withSelection(SEL_DATA_MIMETYPE_CAPABILITY_STANDALONE_MESSAGING, null)
+                .withValues(values).build());
 
         /* Update image sharing menu */
         values.clear();

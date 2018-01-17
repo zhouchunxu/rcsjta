@@ -73,7 +73,8 @@ public class ContactUtil {
     /**
      * Regular expression to validate phone numbers
      */
-    private final static String REGEXP_CONTACT = "^00\\d{1,15}$|^[+]?\\d{1,15}$|^\\d{1,15}$";
+    // Append china mobile fetion application service access code
+    private final static String REGEXP_CONTACT = "^12520\\d{1,15}$|^00\\d{1,15}$|^[+]?\\d{1,15}$|^\\d{1,15}$";
 
     /**
      * Pattern to check contact
@@ -232,8 +233,8 @@ public class ContactUtil {
                 put( 455 , new String[] {"853" }); // "Macao, China"
                 put( 456 , new String[] {"855" , "0" }); // Cambodia (Kingdom of)
                 put( 457 , new String[] {"856" }); // Lao People's Democratic Republic
-                put( 460 , new String[] {"86" , "0" }); // China (People's Republic of)
-                put( 461 , new String[] {"86" , "0" }); // China (People's Republic of)
+                put( 460 , new String[] {"86"/* , "0" */}); // China (People's Republic of)
+                put( 461 , new String[] {"86"/* , "0" */}); // China (People's Republic of)
                 put( 466 , new String[] {"886" , "0" }); // "Taiwan, China"
                 put( 467 , new String[] {"850" }); // Democratic People's Republic of Korea
                 put( 470 , new String[] {"880" , "0" }); // Bangladesh (People's Republic of)

@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +34,7 @@ import com.gsma.rcs.provider.contact.ContactManager;
 import com.gsma.rcs.provider.settings.RcsSettings;
 import com.gsma.rcs.utils.StorageUtils;
 import com.gsma.rcs.utils.logger.Logger;
-import com.gsma.services.rcs.chat.GroupChat.ParticipantStatus;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.Participant.Status;
 import com.gsma.services.rcs.contact.ContactId;
 import com.gsma.services.rcs.filetransfer.FileTransfer;
 
@@ -58,6 +59,13 @@ public abstract class FileSharingSession extends ImsServiceSession {
      */
     public final static String FILE_DISPOSITION_ATTACH = "attachment";
 
+    /**
+     * File timelen disposition which means the video/audio file duration
+     */
+    public final static String FILE_DISPOSITION_TIMELEN = "timelen";
+
+    private String mConversationId;
+
     private String mContributionId;
 
     /**
@@ -67,7 +75,7 @@ public abstract class FileSharingSession extends ImsServiceSession {
 
     private boolean mFileTransferred = false;
 
-    protected final Map<ContactId, ParticipantStatus> mParticipants;
+    protected final Map<ContactId, Status> mParticipants;
 
     private final MmContent mFileIcon;
 
@@ -76,6 +84,8 @@ public abstract class FileSharingSession extends ImsServiceSession {
     private final String mFileTransferId;
 
     protected final ImdnManager mImdnManager;
+
+    private String mMessageId;
 
     private static final Logger sLogger = Logger.getLogger(FileSharingSession.class.getName());
 
@@ -111,6 +121,24 @@ public abstract class FileSharingSession extends ImsServiceSession {
     public abstract boolean isHttpTransfer();
 
     /**
+     * Return the conversationId ID
+     *
+     * @return Conversation ID
+     */
+    public String getConversationID() {
+        return mConversationId;
+    }
+
+    /**
+     * Set the conversation ID
+     *
+     * @param id Conversation ID
+     */
+    public void setConversationID(String id) {
+        mConversationId = id;
+    }
+
+    /**
      * Return the contribution ID
      *
      * @return Contribution ID
@@ -142,7 +170,7 @@ public abstract class FileSharingSession extends ImsServiceSession {
      *
      * @return List of participants
      */
-    public Map<ContactId, ParticipantStatus> getParticipants() {
+    public Map<ContactId, Status> getParticipants() {
         return mParticipants;
     }
 
@@ -210,6 +238,16 @@ public abstract class FileSharingSession extends ImsServiceSession {
      */
     public MmContent getFileicon() {
         return mFileIcon;
+    }
+
+    /**
+     * Returns the fileIcon cid
+     *
+     * @return cid Fileicon cid
+     */
+    public String getFileiconCid() {
+        return System.currentTimeMillis() + "@"
+                + getImsService().getImsModule().getImsUserProfile().getHomeDomain();
     }
 
     /**
@@ -284,6 +322,9 @@ public abstract class FileSharingSession extends ImsServiceSession {
      * @return string for payload insertion.
      */
     public String getFileDisposition() {
+        if (getContent().getTimelen() > 0) {
+            return FileSharingSession.FILE_DISPOSITION_TIMELEN + "=" + getContent().getTimelen();
+        }
         return getContent().isPlayable() ? FileSharingSession.FILE_DISPOSITION_RENDER
                 : FileSharingSession.FILE_DISPOSITION_ATTACH;
     }
@@ -297,5 +338,15 @@ public abstract class FileSharingSession extends ImsServiceSession {
     /* package private */static String DispositionToString(FileTransfer.Disposition disposition) {
         return FileTransfer.Disposition.ATTACH == disposition ? FILE_DISPOSITION_ATTACH
                 : FILE_DISPOSITION_RENDER;
+    }
+
+
+    // TODO
+    public String getMessageId() {
+        return mMessageId;
+    }
+
+    public void setMessageId(String mMessageId) {
+        this.mMessageId = mMessageId;
     }
 }

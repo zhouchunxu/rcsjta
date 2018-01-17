@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2015 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +27,7 @@ import com.gsma.rcs.core.access.NetworkAccess;
 import com.gsma.rcs.core.ims.ImsModule;
 import com.gsma.rcs.core.ims.network.registration.GibaRegistrationProcedure;
 import com.gsma.rcs.core.ims.network.registration.HttpDigestRegistrationProcedure;
+import com.gsma.rcs.core.ims.network.registration.ImsAkaRegistrationProcedure;
 import com.gsma.rcs.core.ims.network.registration.RegistrationManager;
 import com.gsma.rcs.core.ims.network.registration.RegistrationProcedure;
 import com.gsma.rcs.core.ims.network.sip.SipManager;
@@ -328,6 +330,12 @@ public abstract class ImsNetworkInterface {
                 }
                 mRegistrationProcedure = new GibaRegistrationProcedure();
                 break;
+            case AKA:
+                if (sLogger.isActivated()) {
+                    sLogger.debug("Load IMS AKA authentication procedure");
+                }
+                mRegistrationProcedure = new ImsAkaRegistrationProcedure();
+                break;
             case DIGEST:
             default:
                 if (sLogger.isActivated()) {
@@ -352,6 +360,7 @@ public abstract class ImsNetworkInterface {
                 }
                 intf = new GibaUserProfileInterface(mRcsSettings);
                 break;
+            case AKA:
             case DIGEST:
             default:
                 if (sLogger.isActivated()) {

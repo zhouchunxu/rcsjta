@@ -61,6 +61,22 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:paddingTop="5dip"
+            android:text="@string/Max_length_of_a_standalone_message"/>
+
+        <android.support.v7.widget.AppCompatEditText
+            android:id="@+id/MaxStandaloneMessageLength"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="5dip"
+            android:layout_marginRight="5dip"
+            android:inputType="number"
+            android:lines="1"
+            android:maxLength="5"/>
+
+        <android.support.v7.widget.AppCompatTextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="5dip"
             android:text="@string/Max_length_of_a_chat_message"/>
 
         <android.support.v7.widget.AppCompatEditText

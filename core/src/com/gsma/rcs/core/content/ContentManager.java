@@ -2,7 +2,8 @@
  * Software Name : RCS IMS Stack
  *
  * Copyright (C) 2010-2016 Orange.
- * Copyright (C) 2014 Sony Mobile Communications AB.
+ * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +32,7 @@ import com.gsma.rcs.core.ims.protocol.sdp.MediaAttribute;
 import com.gsma.rcs.core.ims.protocol.sdp.MediaDescription;
 import com.gsma.rcs.core.ims.protocol.sdp.SdpParser;
 import com.gsma.rcs.core.ims.protocol.sip.SipRequest;
+import com.gsma.rcs.core.ims.service.im.chat.ChatUtils;
 import com.gsma.rcs.core.ims.service.im.filetransfer.FileSharingSession;
 import com.gsma.rcs.platform.file.FileFactory;
 import com.gsma.rcs.provider.settings.RcsSettings;
@@ -238,12 +240,16 @@ public class ContentManager {
         long size = Long.parseLong(SipUtils.extractParameter(fileSelectorValue, "size:", "-1"));
         String filename = SipUtils.extractParameter(fileSelectorValue, "name:", "");
         Uri file = ContentManager.generateUriForReceivedContent(filename, mime, rcsSettings);
+        MmContent content = ContentManager.createMmContent(file, mime, size, filename);
         MediaAttribute attr2 = desc.getMediaAttribute("file-disposition");
         String fileDispoValue = attr2.getValue();
-        MmContent content = ContentManager.createMmContent(file, mime, size, filename);
-        if (FileSharingSession.FILE_DISPOSITION_RENDER.equals(fileDispoValue)) {
+        if (fileDispoValue.startsWith(FileSharingSession.FILE_DISPOSITION_TIMELEN)) {
+            content.setTimelen(Long.parseLong(fileDispoValue.split("=")[1]));
+        } else if (FileSharingSession.FILE_DISPOSITION_RENDER.equals(fileDispoValue)) {
             content.setPlayable(true);
         }
+        // Set delivery message id
+        content.setDeliveryMsgId(ChatUtils.getMessageId(invite));
         return content;
     }
 

@@ -30,7 +30,7 @@ interface IFileTransfer {
 	int getState();
 
 	int getReasonCode();
-	
+
 	int getDirection();
 
 	long getTimestamp();
@@ -40,29 +40,31 @@ interface IFileTransfer {
 	long getTimestampDelivered();
 
 	long getTimestampDisplayed();
-		
+
 	void acceptInvitation();
 
 	void rejectInvitation();
 
 	void abortTransfer();
-	
+
 	void pauseTransfer();
-	
+
 	void resumeTransfer();
 
-	boolean isRead();
-
-	boolean isAllowedToResendTransfer();
-
 	void resendTransfer();
+
+//	void reportTransfer();
 
 	boolean isAllowedToPauseTransfer();
 
 	boolean isAllowedToResumeTransfer();
-	
+
+	boolean isAllowedToResendTransfer();
+
+	boolean isRead();
+
 	long getFileExpiration();
-	
+
 	long getFileIconExpiration();
 
 	boolean isExpiredDelivery();

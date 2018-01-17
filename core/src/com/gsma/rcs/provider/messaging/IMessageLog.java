@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +24,9 @@
 package com.gsma.rcs.provider.messaging;
 
 import com.gsma.rcs.core.ims.service.im.chat.ChatMessage;
+import com.gsma.services.rcs.chat.ChatLog.Message.GroupChatEvent;
 import com.gsma.services.rcs.chat.ChatLog.Message.Content.ReasonCode;
 import com.gsma.services.rcs.chat.ChatLog.Message.Content.Status;
-import com.gsma.services.rcs.chat.ChatLog.Message.GroupChatEvent;
 import com.gsma.services.rcs.contact.ContactId;
 
 import android.database.Cursor;
@@ -43,29 +44,46 @@ public interface IMessageLog {
 
     /**
      * Add a spam message
-     * 
+     *
+     * @param chatId Chat ID
      * @param msg Chat message
      */
-    void addOneToOneSpamMessage(ChatMessage msg);
+    void addOneToOneSpamMessage(String chatId, ChatMessage msg);
 
     /**
      * Add a chat message
-     * 
+     *
+     * @param chatId Chat ID
      * @param msg Chat message
      * @param imdnDisplayedRequested IMDN display report requested
      */
-    void addIncomingOneToOneChatMessage(ChatMessage msg, boolean imdnDisplayedRequested);
+    void addIncomingOneToOneChatMessage(String chatId, ChatMessage msg,
+            boolean imdnDisplayedRequested);
 
     /**
      * Add a chat message
-     * 
+     *
+     * @param chatId Chat ID
      * @param msg Chat message
      * @param status Message status
      * @param reasonCode Status reason code
      * @param deliveryExpiration TODO
      */
-    void addOutgoingOneToOneChatMessage(ChatMessage msg, Status status, ReasonCode reasonCode,
-            long deliveryExpiration);
+    void addOutgoingOneToOneChatMessage(String chatId, ChatMessage msg, Status status,
+            ReasonCode reasonCode, long deliveryExpiration);
+
+    /**
+     * Add an one-to-many chat message
+     * 
+     * @param chatId Chat ID
+     * @param msg Chat message
+     * @param recipients the set of recipients
+     * @param status Message status
+     * @param reasonCode Status reason code
+     * @param deliveryExpiration TODO
+     */
+    void addOutgoingOneToManyChatMessage(String chatId, ChatMessage msg, Set<ContactId> recipients,
+            Status status, ReasonCode reasonCode, long deliveryExpiration);
 
     /**
      * Add an incoming group chat message
@@ -186,6 +204,15 @@ public interface IMessageLog {
     Cursor getChatMessageData(String msgId);
 
     /**
+     * Get all standalone messages for specific chatId that are in queued state in ascending
+     * order of timestamp
+     *
+     * @param chatId Chat ID
+     * @return Cursor
+     */
+    Cursor getQueuedStandaloneMessages(String chatId);
+
+    /**
      * Get all one-to-one chat messages for specific contact that are in queued state in ascending
      * order of timestamp
      * 
@@ -284,10 +311,11 @@ public interface IMessageLog {
 
     /**
      * Add a one to one chat message for which delivery report has failed
-     * 
+     *
+     * @param chatId the chat ID
      * @param msg Chat message
      */
-    void addOneToOneFailedDeliveryMessage(ChatMessage msg);
+    void addOneToOneFailedDeliveryMessage(String chatId, ChatMessage msg);
 
     /**
      * Add a group chat message for which delivery report has failed

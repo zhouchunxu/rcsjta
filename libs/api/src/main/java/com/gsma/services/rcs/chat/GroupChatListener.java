@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +24,8 @@
 package com.gsma.services.rcs.chat;
 
 import com.gsma.services.rcs.chat.ChatLog.Message.Content.ReasonCode;
-import com.gsma.services.rcs.chat.ChatLog.Message.Content.Status;
-import com.gsma.services.rcs.chat.GroupChat.ParticipantStatus;
-import com.gsma.services.rcs.chat.GroupChat.State;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.Participant.Status;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.State;
 import com.gsma.services.rcs.contact.ContactId;
 import com.gsma.services.rcs.groupdelivery.GroupDeliveryInfo;
 
@@ -44,7 +44,7 @@ public abstract class GroupChatListener {
      * @param state group chat state
      * @param reasonCode reason code
      */
-    public abstract void onStateChanged(String chatId, State state, GroupChat.ReasonCode reasonCode);
+    public abstract void onStateChanged(String chatId, State state, ChatLog.GroupChat.ReasonCode reasonCode);
 
     /**
      * Callback called when an Is-composing event has been received. If the remote is typing a
@@ -66,7 +66,7 @@ public abstract class GroupChatListener {
      * @param reasonCode reason code
      */
     public abstract void onMessageStatusChanged(String chatId, String mimeType, String msgId,
-            Status status, ReasonCode reasonCode);
+                                                ChatLog.Message.Content.Status status, ReasonCode reasonCode);
 
     /**
      * Callback called when a group delivery info status/reasonCode was changed for a single
@@ -84,6 +84,31 @@ public abstract class GroupChatListener {
             GroupDeliveryInfo.ReasonCode reasonCode);
 
     /**
+     * Callback called when the subject has been changed in a group chat.
+     *
+     * @param chatId chat id
+     * @param subject group chat subject
+     */
+    public abstract void onSubjectChanged(String chatId, String subject);
+
+    /**
+     * Callback called when the ownership has been changed in a group chat.
+     *
+     * @param chatId chat id
+     * @param contact contact id
+     */
+    public abstract void onOwnershipChanged(String chatId, ContactId contact);
+
+    /**
+     * Callback called when a participant alias has been changed in a group chat.
+     *
+     * @param chatId chat id
+     * @param contact contact id
+     * @param alias participant alias
+     */
+    public abstract void onParticipantAliasChanged(String chatId, ContactId contact, String alias);
+
+    /**
      * Callback called when a participant status has been changed in a group chat.
      *
      * @param chatId chat id
@@ -91,7 +116,7 @@ public abstract class GroupChatListener {
      * @param status participant status
      */
     public abstract void onParticipantStatusChanged(String chatId, ContactId contact,
-            ParticipantStatus status);
+            Status status);
 
     /**
      * Callback called when a delete operation completed that resulted in that one or several group

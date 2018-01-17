@@ -13,7 +13,7 @@ import com.gsma.services.rcs.RcsServiceRegistration;
 interface ICapabilityService {
 
 	boolean isServiceRegistered();
-	
+
 	int getServiceRegistrationReasonCode();
 
 	void addEventListener(IRcsServiceRegistrationListener listener);
@@ -26,7 +26,7 @@ interface ICapabilityService {
 
 	void requestContactCapabilities(in ContactId contact);
 
-    void requestAllContactsCapabilities();
+	void requestAllContactsCapabilities();
 
 	void requestContactCapabilities2(in List<ContactId> contacts);
 
@@ -37,8 +37,8 @@ interface ICapabilityService {
 	void addCapabilitiesListener2(in ContactId contact, in ICapabilitiesListener listener);
 
 	void removeCapabilitiesListener2(in ContactId contact, in ICapabilitiesListener listener);
-	
+
 	int getServiceVersion();
-	
+
 	ICommonServiceConfiguration getCommonConfiguration();
 }

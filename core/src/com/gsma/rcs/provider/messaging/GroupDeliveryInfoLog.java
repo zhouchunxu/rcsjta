@@ -63,6 +63,9 @@ public class GroupDeliveryInfoLog implements IGroupDeliveryInfoLog {
     private static final String SELECTION_DELIVERY_INFO_NOT_DISPLAYED = GroupDeliveryInfoData.KEY_STATUS
             + "<>" + Status.DISPLAYED.toInt();
 
+    private static final String SELECTION_DELIVERY_INFO_FAILED = GroupDeliveryInfoData.KEY_STATUS
+            + "<>" + Status.FAILED.toInt();
+
     private static final String[] PROJECTION_MESSAGE_ID = new String[] {
         GroupDeliveryInfoData.KEY_ID
     };
@@ -149,6 +152,21 @@ public class GroupDeliveryInfoLog implements IGroupDeliveryInfoLog {
             Uri contentUri = Uri.withAppendedPath(GroupDeliveryInfoData.CONTENT_URI, msgId);
             cursor = mLocalContentResolver.query(contentUri, null,
                     SELECTION_DELIVERY_INFO_NOT_DISPLAYED, null, null);
+            CursorUtil.assertCursorIsNotNull(cursor, contentUri);
+            return !cursor.moveToFirst();
+
+        } finally {
+            CursorUtil.close(cursor);
+        }
+    }
+
+    @Override
+    public boolean isFailedToAllRecipients(String msgId) {
+        Cursor cursor = null;
+        try {
+            Uri contentUri = Uri.withAppendedPath(GroupDeliveryInfoData.CONTENT_URI, msgId);
+            cursor = mLocalContentResolver.query(contentUri, null,
+                    SELECTION_DELIVERY_INFO_FAILED, null, null);
             CursorUtil.assertCursorIsNotNull(cursor, contentUri);
             return !cursor.moveToFirst();
 

@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2015 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,6 +78,11 @@ public abstract class RcsService {
              */
             public final static int CPR = 2;
 
+            /**
+             * China Mobile Release version of RCS API
+             */
+            public final static int CMR = 3;
+
             private VERSION_CODES() {
             }
         }
@@ -91,7 +97,7 @@ public abstract class RcsService {
          * 
          * @see VERSION_CODES
          */
-        public static final int API_VERSION = VERSION_CODES.CPR;
+        public static final int API_VERSION = VERSION_CODES.CMR;
 
         /**
          * Internal number used by the underlying source control to represent this build

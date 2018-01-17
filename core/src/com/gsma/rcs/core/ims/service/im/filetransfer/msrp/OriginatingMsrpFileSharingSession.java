@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +41,9 @@ import com.gsma.rcs.core.ims.protocol.sip.SipResponse;
 import com.gsma.rcs.core.ims.service.ImsSessionListener;
 import com.gsma.rcs.core.ims.service.capability.Capabilities;
 import com.gsma.rcs.core.ims.service.im.InstantMessagingService;
+import com.gsma.rcs.core.ims.service.im.chat.ChatUtils;
 import com.gsma.rcs.core.ims.service.im.chat.ContributionIdGenerator;
-import com.gsma.rcs.core.ims.service.im.chat.imdn.ImdnDocument;
+import com.gsma.rcs.core.ims.service.im.chat.cpim.CpimMessage;
 import com.gsma.rcs.core.ims.service.im.filetransfer.FileSharingError;
 import com.gsma.rcs.core.ims.service.im.filetransfer.FileSharingSessionListener;
 import com.gsma.rcs.core.ims.service.im.filetransfer.ImsFileSharingSession;
@@ -55,9 +57,11 @@ import com.gsma.rcs.utils.CloseableUtils;
 import com.gsma.rcs.utils.IdGenerator;
 import com.gsma.rcs.utils.NetworkRessourceManager;
 import com.gsma.rcs.utils.logger.Logger;
+import com.gsma.services.rcs.chat.ChatLog;
 import com.gsma.services.rcs.contact.ContactId;
 
 import android.net.Uri;
+import android.text.TextUtils;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -66,9 +70,6 @@ import java.io.InputStream;
 import java.text.ParseException;
 
 import javax2.sip.InvalidArgumentException;
-import javax2.sip.header.ContentDispositionHeader;
-import javax2.sip.header.ContentLengthHeader;
-import javax2.sip.header.ContentTypeHeader;
 
 /**
  * Originating file transfer session
@@ -77,35 +78,34 @@ import javax2.sip.header.ContentTypeHeader;
  */
 public class OriginatingMsrpFileSharingSession extends ImsFileSharingSession implements
         MsrpEventListener {
-    /**
-     * Boundary tag
-     */
-    private final static String BOUNDARY_TAG = "boundary1";
 
-    private MsrpManager mMsrpMgr;
+    /*private*/ MsrpManager mMsrpMgr;
 
-    private final InstantMessagingService mImService;
+    /*private*/ final InstantMessagingService mImService;
 
     private static final Logger sLogger = Logger.getLogger(OriginatingMsrpFileSharingSession.class
             .getSimpleName());
 
     /**
      * Constructor
-     * 
-     * @param fileTransferId File transfer Id
+     *
      * @param imService InstantMessagingService
+     * @param chatId Chat Id
+     * @param fileTransferId File transfer Id
      * @param content Content to be shared
      * @param contact Remote contact identifier
+     * @param remoteUri Remote id
      * @param fileIcon Content of file icon
      * @param rcsSettings The RCS settings accessor
      * @param timestamp Local timestamp for the session
      * @param contactManager The contact manager accessor
      */
-    public OriginatingMsrpFileSharingSession(InstantMessagingService imService,
-            String fileTransferId, MmContent content, ContactId contact, MmContent fileIcon,
-            RcsSettings rcsSettings, long timestamp, ContactManager contactManager) {
-        super(imService, content, contact, fileIcon, fileTransferId, rcsSettings, timestamp,
-                contactManager);
+    public OriginatingMsrpFileSharingSession(InstantMessagingService imService, String chatId,
+            String fileTransferId, MmContent content, ContactId contact, Uri remoteUri,
+            MmContent fileIcon, RcsSettings rcsSettings, long timestamp,
+            ContactManager contactManager) {
+        super(imService, content, contact, remoteUri, fileIcon, fileTransferId, rcsSettings,
+                timestamp, contactManager);
         if (sLogger.isActivated()) {
             sLogger.debug("OriginatingFileSharingSession contact=" + contact + " filename="
                     + content.getName());
@@ -113,12 +113,14 @@ public class OriginatingMsrpFileSharingSession extends ImsFileSharingSession imp
         mImService = imService;
         // Create dialog path
         createOriginatingDialogPath();
+        // Set conversation ID
+        setConversationID(chatId);
         // Set contribution ID
         String id = ContributionIdGenerator.getContributionId(getDialogPath().getCallId());
         setContributionID(id);
     }
 
-    private byte[] getFileData(Uri file, int size) throws NetworkException {
+    /*private*/ byte[] getFileData(Uri file, int size) throws NetworkException {
         FileInputStream fileInputStream = null;
         try {
             fileInputStream = (FileInputStream) AndroidFactory.getApplicationContext()
@@ -174,46 +176,25 @@ public class OriginatingMsrpFileSharingSession extends ImsFileSharingSession imp
             if (location != null) {
                 sdp.append("a=file-location:").append(location.toString()).append(SipUtils.CRLF);
             }
-            MmContent fileIcon = getFileicon();
-            if (fileIcon == null) {
-                /* Set the local SDP part in the dialog path */
-                getDialogPath().setLocalContent(sdp.toString());
-
-            } else {
-                Capabilities remoteCapabilities = mContactManager
-                        .getContactCapabilities(getRemoteContact());
-                boolean fileIconSupported = remoteCapabilities != null
-                        && remoteCapabilities.isFileTransferThumbnailSupported();
-                if (fileIconSupported) {
-                    sdp.append("a=file-icon:cid:image@joyn.com").append(SipUtils.CRLF);
-
-                    /* Encode the file icon file */
-                    String imageEncoded = Base64.encodeBase64ToString(getFileData(
-                            fileIcon.getUri(), (int) fileIcon.getSize()));
-                    String sdpContent = sdp.toString();
-                    String multipart = Multipart.BOUNDARY_DELIMITER + BOUNDARY_TAG + SipUtils.CRLF
-                            + ContentTypeHeader.NAME + ": application/sdp" + SipUtils.CRLF
-                            + ContentLengthHeader.NAME + ": " + sdpContent.getBytes(UTF8).length
-                            + SipUtils.CRLF + SipUtils.CRLF + sdpContent + SipUtils.CRLF
-                            + Multipart.BOUNDARY_DELIMITER + BOUNDARY_TAG + SipUtils.CRLF
-                            + ContentTypeHeader.NAME + ": " + fileIcon.getEncoding()
-                            + SipUtils.CRLF + SipUtils.HEADER_CONTENT_TRANSFER_ENCODING
-                            + ": base64" + SipUtils.CRLF + SipUtils.HEADER_CONTENT_ID
-                            + ": <image@joyn.com>" + SipUtils.CRLF + ContentLengthHeader.NAME
-                            + ": " + imageEncoded.length() + SipUtils.CRLF
-                            + ContentDispositionHeader.NAME + ": icon" + SipUtils.CRLF
-                            + SipUtils.CRLF + imageEncoded + SipUtils.CRLF
-                            + Multipart.BOUNDARY_DELIMITER + BOUNDARY_TAG
-                            + Multipart.BOUNDARY_DELIMITER;
-
-                    /* Set the local SDP part in the dialog path */
-                    getDialogPath().setLocalContent(multipart);
-
-                } else {
-                    /* Set the local SDP part in the dialog path */
-                    getDialogPath().setLocalContent(sdp.toString());
-                }
+            /* Set File-range attribute */
+            String range = getFileRangeAttribute();
+            if (range != null) {
+                sdp.append("a=file-range:").append(range).append(SipUtils.CRLF);
             }
+            /* Set Supportting-inactive information in cmnet */
+            if (mRcsSettings.isCmccRelease()) {
+                sdp.append("i=supportting inactive").append(SipUtils.CRLF);
+            }
+            /* Set File-icon attribute */
+            MmContent fileIcon = getFileicon();
+            boolean fileIconSupported = isFileIconSupported();
+            if (fileIcon != null && fileIconSupported) {
+                sdp.append("a=file-icon:cid:").append(getFileiconCid()).append(SipUtils.CRLF);
+            }
+            /* Build and set local content */
+            String content = buildLocalContent(sdp.toString());
+            getDialogPath().setLocalContent(content);
+
             /* Create an INVITE request */
             if (sLogger.isActivated()) {
                 sLogger.info("Send INVITE");
@@ -262,6 +243,7 @@ public class OriginatingMsrpFileSharingSession extends ImsFileSharingSession imp
     @Override
     public void openMediaSession() throws PayloadException, NetworkException {
         mMsrpMgr.openMsrpSession();
+        mMsrpMgr.sendEmptyChunk(); // Required in cmnet
     }
 
     @Override
@@ -304,9 +286,9 @@ public class OriginatingMsrpFileSharingSession extends ImsFileSharingSession imp
                         FileTransferData.UNKNOWN_EXPIRATION, FileTransferData.UNKNOWN_EXPIRATION,
                         FileTransferProtocol.MSRP);
             }
-            mImService.receiveOneToOneFileDeliveryStatus(contact, new ImdnDocument(
-                    getFileTransferId(), ImdnDocument.DISPLAY,
-                    ImdnDocument.DeliveryStatus.DISPLAYED, timestamp));
+            // mImService.receiveOneToOneFileDeliveryStatus(contact, new ImdnDocument(
+            // getFileTransferId(), ImdnDocument.DISPLAY,
+            // ImdnDocument.DeliveryStatus.DISPLAYED, timestamp));
 
         } catch (PayloadException e) {
             sLogger.error("Failed to notify MSRP data transferred for msgId : " + msgId, e);
@@ -372,10 +354,94 @@ public class OriginatingMsrpFileSharingSession extends ImsFileSharingSession imp
     @Override
     public void handle200OK(SipResponse resp) throws PayloadException, NetworkException,
             FileAccessException {
-        long timestamp = System.currentTimeMillis();
-        mImService.receiveOneToOneFileDeliveryStatus(getRemoteContact(), new ImdnDocument(
-                getFileTransferId(), ImdnDocument.POSITIVE_DELIVERY,
-                ImdnDocument.DeliveryStatus.DELIVERED, timestamp));
+        // long timestamp = System.currentTimeMillis();
+        // mImService.receiveOneToOneFileDeliveryStatus(getRemoteContact(), new ImdnDocument(
+        // getFileTransferId(), ImdnDocument.POSITIVE_DELIVERY,
+        // ImdnDocument.DeliveryStatus.DELIVERED, timestamp));
         super.handle200OK(resp);
+    }
+
+    public String buildCpimMessageWithImdn(String msgId, boolean display, boolean delivery) {
+        if (mRcsSettings.isCpmMsgTech()) {
+            String from = ChatUtils.ANONYMOUS_URI;
+            String to = ChatUtils.ANONYMOUS_URI;
+            String networkContent = "";
+            String networkMimeType = ChatUtils
+                    .apiMimeTypeToNetworkMimeType(ChatLog.Message.MimeType.TEXT_MESSAGE);
+            if (display) {
+                return ChatUtils.buildCpimMessageWithImdn(from, to, msgId, networkContent,
+                        networkMimeType, getTimestamp());
+            } else if (delivery) {
+                return ChatUtils.buildCpimMessageWithoutDisplayedImdn(from, to, msgId,
+                        networkContent, networkMimeType, getTimestamp());
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Is fileIcon supported
+     *
+     * @return supported
+     */
+    // TODO to avoid different call caused double logic
+    public boolean isFileIconSupported() {
+        ContactId remote = getRemoteContact();
+        if (remote == null) {
+            return false;
+        }
+        Capabilities remoteCapabilities = mContactManager.getContactCapabilities(remote);
+        return remoteCapabilities != null && remoteCapabilities.isFileTransferThumbnailSupported();
+    }
+
+    /**
+     * Build local content
+     *
+     * @param sdpContent
+     * @return content string
+     * @throws NetworkException
+     */
+    public String buildLocalContent(String sdpContent) throws NetworkException {
+        /* Build CPIM part */
+        String cpim = buildCpimMessageWithImdn(getContent().getDeliveryMsgId(),
+                mImdnManager.isRequestOneToOneDeliveryDisplayedReportsEnabled(),
+                mImdnManager.isDeliveryDeliveredReportsEnabled());
+        MmContent fileIcon = getFileicon();
+        boolean fileIconSupported = isFileIconSupported();
+        /* Build and set local content */
+        if (!TextUtils.isEmpty(cpim) || (fileIcon != null && fileIconSupported)) {
+            StringBuilder multipart = new StringBuilder(Multipart.BOUNDARY_DELIMITER)
+                    .append(BOUNDARY_TAG).append(SipUtils.CRLF)
+                    .append("Content-Type: application/sdp").append(SipUtils.CRLF)
+                    .append("Content-Length: ").append(sdpContent.getBytes(UTF8).length)
+                    .append(SipUtils.CRLF).append(SipUtils.CRLF).append(sdpContent)
+                    .append(SipUtils.CRLF);
+            if (!TextUtils.isEmpty(cpim)) {
+                multipart.append(Multipart.BOUNDARY_DELIMITER).append(BOUNDARY_TAG)
+                        .append(SipUtils.CRLF).append("Content-Type: ")
+                        .append(CpimMessage.MIME_TYPE).append(SipUtils.CRLF)
+                        .append("Content-Length: ").append(cpim.getBytes(UTF8).length)
+                        .append(SipUtils.CRLF).append(SipUtils.CRLF).append(cpim);
+            }
+            if (fileIcon != null && fileIconSupported) {
+                /* Encode the file icon file */
+                String imageEncoded = Base64.encodeBase64ToString(getFileData(fileIcon.getUri(),
+                        (int) fileIcon.getSize()));
+                multipart.append(Multipart.BOUNDARY_DELIMITER).append(BOUNDARY_TAG)
+                        .append(SipUtils.CRLF).append("Content-Type: " + fileIcon.getEncoding())
+                        .append(SipUtils.CRLF).append(SipUtils.HEADER_CONTENT_TRANSFER_ENCODING)
+                        .append(": base64").append(SipUtils.CRLF)
+                        .append(SipUtils.HEADER_CONTENT_ID).append(": ").append(getFileiconCid())
+                        .append(SipUtils.CRLF).append("Content-Length: ")
+                        .append(imageEncoded.length()).append(SipUtils.CRLF)
+                        .append("Content-Disposition: icon").append(SipUtils.CRLF)
+                        .append(SipUtils.CRLF).append(imageEncoded).append(SipUtils.CRLF);
+            }
+            multipart.append(Multipart.BOUNDARY_DELIMITER).append(BOUNDARY_TAG)
+                    .append(Multipart.BOUNDARY_DELIMITER);
+            return multipart.toString();
+        } else {
+            return sdpContent;
+        }
     }
 }

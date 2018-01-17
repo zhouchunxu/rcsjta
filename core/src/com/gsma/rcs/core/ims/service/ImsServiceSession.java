@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +62,6 @@ public abstract class ImsServiceSession extends Thread {
      * Session invitation status
      */
     public enum InvitationStatus {
-
         INVITATION_NOT_ANSWERED, INVITATION_ACCEPTED, INVITATION_REJECTED, INVITATION_CANCELED, 
         INVITATION_TIMEOUT, INVITATION_REJECTED_BY_SYSTEM, INVITATION_DELETED, 
         INVITATION_REJECTED_DECLINE, INVITATION_REJECTED_BUSY_HERE, INVITATION_REJECTED_FORBIDDEN
@@ -929,6 +929,7 @@ public abstract class ImsServiceSession extends Thread {
             // A response has been received
             switch (ctx.getStatusCode()) {
                 case Response.OK:
+                case Response.ACCEPTED:
                     // 200 OK
                     handle200OK(ctx.getSipResponse());
                     break;
@@ -939,6 +940,10 @@ public abstract class ImsServiceSession extends Thread {
                 case Response.PROXY_AUTHENTICATION_REQUIRED:
                     // 407 Proxy Authentication Required
                     handle407Authentication(ctx.getSipResponse());
+                    break;
+                case Response.GONE:
+                    // 410 Gone
+                    handle410Gone(ctx.getSipResponse());
                     break;
                 case SESSION_INTERVAL_TOO_SMALL:
                     // 422 Session Interval Too Small
@@ -1108,6 +1113,15 @@ public abstract class ImsServiceSession extends Thread {
             throw new PayloadException("Failed to handle 407 authentication response!", e);
         }
 
+    }
+
+    /**
+     * Handle 410 Gone
+     *
+     * @param resp 410 response
+     */
+    public void handle410Gone(SipResponse resp) {
+        handleDefaultError(resp);
     }
 
     /**

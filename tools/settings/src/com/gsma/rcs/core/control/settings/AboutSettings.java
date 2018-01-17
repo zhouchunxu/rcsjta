@@ -86,6 +86,9 @@ public class AboutSettings extends Activity {
             case Build.VERSION_CODES.CPR:
                 version.append("Crane Priority Release 1.6.");
                 break;
+            case Build.VERSION_CODES.CMR:
+                version.append("China Mobile Release 1.0.");
+                break;
             default:
                 version.append("Unknown 0.0");
         }

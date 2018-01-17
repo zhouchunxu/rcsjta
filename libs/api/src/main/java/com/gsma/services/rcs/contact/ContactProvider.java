@@ -2,6 +2,7 @@
  * Software Name : RCS IMS Stack
  *
  * Copyright (C) 2010-2016 Orange.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +49,11 @@ public class ContactProvider {
      * Video sharing capability support
      */
     public final static String MIME_TYPE_VIDEO_SHARE = "vnd.android.cursor.item/com.gsma.services.rcs.video-share";
+
+    /**
+     * Standalone messaging capability support
+     */
+    public final static String MIME_TYPE_STANDALONE_MESSAGING = "vnd.android.cursor.item/com.gsma.services.rcs.standalone-messaging";
 
     /**
      * IM/Chat capability support

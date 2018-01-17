@@ -157,6 +157,37 @@ public class ChatServiceConfiguration {
         }
     }
 
+
+    /**
+     * Returns the standalone message size limit. It returns 0 if there is no limitation.
+     * 
+     * @return long Size in bytes
+     * @throws RcsGenericException
+     */
+    public long getStandaloneMessageMaxSize() throws RcsGenericException {
+        try {
+            return mIConfig.getStandaloneMessageMaxLength();
+
+        } catch (Exception e) {
+            throw new RcsGenericException(e);
+        }
+    }
+
+    /**
+     * Is standalone messaging supported
+     * 
+     * @return boolean Returns true if standalone messaging is supported else returns false
+     * @throws RcsGenericException
+     */
+    public boolean isStandaloneMessagingSupported() throws RcsGenericException {
+        try {
+            return mIConfig.isStandaloneMessagingSupported();
+
+        } catch (Exception e) {
+            throw new RcsGenericException(e);
+        }
+    }
+    
     /**
      * Returns True if group chat is supported, else returns False.
      * 

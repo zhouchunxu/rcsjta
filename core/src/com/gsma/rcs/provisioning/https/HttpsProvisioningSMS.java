@@ -47,6 +47,7 @@ import java.util.Random;
 public class HttpsProvisioningSMS {
 
     private static final String OTP_SMS_ENCODING_FORMAT = "UCS2";
+
     /**
      * HttpsProvisioningManager manages HTTP and SMS reception to load provisioning from network
      */

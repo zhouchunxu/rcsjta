@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2015 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -127,9 +128,12 @@ public class SessionAuthenticationAgent {
      */
     public void setAuthorizationHeader(SipRequest request) throws InvalidArgumentException,
             ParseException {
+        if (mRegisterDigest == null) {
+            return;
+        }
         String nextNonce = mRegisterDigest.getNextnonce();
         /* Re-use the registration authentication (nonce caching) */
-        if (mRegisterDigest == null || nextNonce == null) {
+        if (nextNonce == null) {
             return;
         }
         mRegisterDigest.updateNonceParameters();

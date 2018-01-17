@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2015 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,8 +18,6 @@
 package com.gsma.services.rcs.chat;
 
 import com.gsma.services.rcs.chat.ChatLog.Message.Content;
-import com.gsma.services.rcs.chat.ChatLog.Message.Content.Status;
-import com.gsma.services.rcs.chat.GroupChat.ParticipantStatus;
 import com.gsma.services.rcs.contact.ContactId;
 import com.gsma.services.rcs.groupdelivery.GroupDeliveryInfo;
 
@@ -45,11 +44,11 @@ public class GroupChatListenerImpl extends IGroupChatListener.Stub {
 
     @Override
     public void onStateChanged(String chatId, int state, int reasonCode) {
-        GroupChat.State rcsState;
-        GroupChat.ReasonCode rcsReasonCode;
+        ChatLog.GroupChat.State rcsState;
+        ChatLog.GroupChat.ReasonCode rcsReasonCode;
         try {
-            rcsState = GroupChat.State.valueOf(state);
-            rcsReasonCode = GroupChat.ReasonCode.valueOf(reasonCode);
+            rcsState = ChatLog.GroupChat.State.valueOf(state);
+            rcsReasonCode = ChatLog.GroupChat.ReasonCode.valueOf(reasonCode);
         } catch (IllegalArgumentException e) {
             /*
              * Detected unknown state or reasonCode not part of standard coming from stack which a
@@ -71,10 +70,10 @@ public class GroupChatListenerImpl extends IGroupChatListener.Stub {
     @Override
     public void onMessageStatusChanged(String chatId, String mimeType, String msgId, int status,
             int reasonCode) {
-        Status rcsStatus;
+        Content.Status rcsStatus;
         Content.ReasonCode rcsReasonCode;
         try {
-            rcsStatus = Status.valueOf(status);
+            rcsStatus = Content.Status.valueOf(status);
             rcsReasonCode = Content.ReasonCode.valueOf(reasonCode);
         } catch (IllegalArgumentException e) {
             /*
@@ -110,10 +109,26 @@ public class GroupChatListenerImpl extends IGroupChatListener.Stub {
     }
 
     @Override
+    public void onSubjectChanged(String chatId, String subject) throws RemoteException {
+        mListener.onSubjectChanged(chatId, subject);
+    }
+
+    @Override
+    public void onOwnershipChanged(String chatId, ContactId contact) throws RemoteException {
+        mListener.onOwnershipChanged(chatId, contact);
+    }
+
+    @Override
+    public void onParticipantAliasChanged(String chatId, ContactId contact, String alias)
+            throws RemoteException {
+        mListener.onParticipantAliasChanged(chatId, contact, alias);
+    }
+
+    @Override
     public void onParticipantStatusChanged(String chatId, ContactId contact, int status) {
         try {
             mListener
-                    .onParticipantStatusChanged(chatId, contact, ParticipantStatus.valueOf(status));
+                    .onParticipantStatusChanged(chatId, contact, ChatLog.GroupChat.Participant.Status.valueOf(status));
         } catch (IllegalArgumentException e) {
             /*
              * Detected unknown status not part of standard coming from stack which a client
