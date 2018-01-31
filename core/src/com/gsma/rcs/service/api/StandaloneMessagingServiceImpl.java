@@ -1018,7 +1018,7 @@ public class StandaloneMessagingServiceImpl extends IStandaloneMessagingService.
      */
     @Override
     public void deleteOneToOneStandaloneMessages() throws RemoteException {
-//        mImService.deleteOneToOneStandaloneMessages();
+        mImService.tryToDeleteOneToOneChats();
     }
 
     /**
@@ -1038,7 +1038,7 @@ public class StandaloneMessagingServiceImpl extends IStandaloneMessagingService.
      */
     @Override
     public void deleteOneToOneStandaloneMessages2(ContactId contact) throws RemoteException {
-//        mImService.tryToDeleteOneToOneMessages(contact);
+        mImService.tryToDeleteOneToOneStandaloneMessages(contact);
     }
 
     /**
@@ -1051,6 +1051,7 @@ public class StandaloneMessagingServiceImpl extends IStandaloneMessagingService.
     @Override
     public void deleteOneToManyStandaloneMessages2(List<ContactId> contacts) throws RemoteException {
 
+        //TODO
     }
 
     /**
@@ -1171,7 +1172,7 @@ public class StandaloneMessagingServiceImpl extends IStandaloneMessagingService.
     @Override
     public void onMessageDeliveryStatusReceived(String chatId, ContactId contact, ImdnDocument imdn) {
         if (chatId.equals(contact.toString())) {
-            onOneToOneMessageDeliveryStatusReceived(contact, imdn);
+            onOneToOneMessageDeliveryStatusReceived(chatId, contact, imdn);
         } else {
             onOneToManyMessageDeliveryStatusReceived(chatId, contact, imdn);
         }
@@ -1212,12 +1213,11 @@ public class StandaloneMessagingServiceImpl extends IStandaloneMessagingService.
                 .toString());
     }
 
-    private void onOneToOneMessageDeliveryStatusReceived(ContactId contact, ImdnDocument imdn) {
+    private void onOneToOneMessageDeliveryStatusReceived(String chatId, ContactId contact, ImdnDocument imdn) {
         ImdnDocument.DeliveryStatus status = imdn.getStatus();
         String msgId = imdn.getMsgId();
         long timestamp = imdn.getDateTime();
         String mimeType = mMessagingLog.getMessageMimeType(msgId);
-        String chatId = null;// FIXME
         switch (status) {
             case DELIVERED:
                 synchronized (mLock) {

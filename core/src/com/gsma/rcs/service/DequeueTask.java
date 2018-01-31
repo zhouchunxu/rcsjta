@@ -39,6 +39,8 @@ import com.gsma.services.rcs.filetransfer.FileTransfer.State;
 import android.content.Context;
 import android.net.Uri;
 
+import java.util.Set;
+
 public abstract class DequeueTask implements Runnable {
 
     private final Core mCore;
@@ -301,6 +303,26 @@ public abstract class DequeueTask implements Runnable {
     }
 
     /**
+     * Check if it is possible to dequeue one-to-many file transfer
+     *
+     * @param chatId Chat ID
+     * @param contacts Contact IDs
+     * @param file file Uri
+     * @param size file size
+     * @return boolean
+     */
+    protected boolean isPossibleToDequeueOneToManyFileTransfer(String chatId,
+            Set<ContactId> contacts, Uri file, long size) {
+        if (!isPossibleToDequeueFileTransfer(file, size)) {
+            return false;
+        }
+        if (!mRcsSettings.getMyCapabilities().isFileTransferMsrpSupported()) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * Check if it is possible to dequeue group file transfer
      * 
      * @param chatId Chat ID
@@ -332,8 +354,9 @@ public abstract class DequeueTask implements Runnable {
      * @param mimeType mime type
      */
     protected void setStandaloneMessageAsFailedDequeue(String chatId, String msgId, String mimeType) {
-        mChatService.setStandaloneMessageStatusAndReasonCode(chatId, msgId, mimeType,
-                Status.FAILED, Content.ReasonCode.FAILED_SEND);
+        // TODO
+//        mChatService.setStandaloneMessageStatusAndReasonCode(chatId, msgId, mimeType,
+//                Status.FAILED, Content.ReasonCode.FAILED_SEND);
     }
 
     /**
@@ -369,6 +392,17 @@ public abstract class DequeueTask implements Runnable {
      */
     protected void setOneToOneFileTransferAsFailedDequeue(ContactId contact, String fileTransferId) {
         mFileTransferService.setOneToOneFileTransferStateAndReasonCode(fileTransferId, contact,
+                State.FAILED, FileTransfer.ReasonCode.FAILED_NOT_ALLOWED_TO_SEND);
+    }
+
+    /**
+     * Set one-many file transfer as failed
+     *
+     * @param chatId Chat ID
+     * @param fileTransferId File transfer ID
+     */
+    protected void setOneToManyFileTransferAsFailedDequeue(String chatId, String fileTransferId) {
+        mFileTransferService.setOneToManyFileTransferStateAndReasonCode(fileTransferId, chatId,
                 State.FAILED, FileTransfer.ReasonCode.FAILED_NOT_ALLOWED_TO_SEND);
     }
 

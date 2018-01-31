@@ -34,14 +34,16 @@ public class OneToManyFileTransferDeleteTask extends DeleteTask.GroupedByChatId 
     private static final Logger sLogger = Logger.getLogger(OneToManyFileTransferDeleteTask.class
             .getName());
 
-    private static final String SELECTION_ALL_ONE_TO_MANY_FILETRANSFERS = FileTransferData.KEY_CHAT_ID
-            + "<>"
-            + FileTransferData.KEY_CONVERSATION_ID
-            + " AND "
-            + FileTransferData.KEY_CHAT_ID
-            + " = " + FileTransferData.KEY_CONTACT;
+    private static final String SELECTION_ALL_ONETOMANY_FILETRANSFERS = FileTransferData.KEY_CHAT_ID
+            + " <> " + FileTransferData.KEY_CONTACT;
 
-    private static final String SELECTION_FILETRANSFER_BY_CHATID = FileTransferData.KEY_CHAT_ID
+    private static final String SELECTION_ONETOMANY_FILETRANSFER_BY_CHATID = FileTransferData.KEY_CHAT_ID
+            + "=?";
+
+    private static final String SELECTION_GROUPDELIVERY_BY_CHATID = GroupDeliveryInfoData.KEY_CHAT_ID
+            + "=?";
+
+    private static final String SELECTION_GROUPDELIVERY_BY_FILEID = GroupDeliveryInfoData.KEY_ID
             + "=?";
 
     private final FileTransferServiceImpl mFileTransferService;
@@ -58,13 +60,13 @@ public class OneToManyFileTransferDeleteTask extends DeleteTask.GroupedByChatId 
     public OneToManyFileTransferDeleteTask(FileTransferServiceImpl fileTransferService,
             InstantMessagingService imService, LocalContentResolver contentResolver) {
         super(contentResolver, FileTransferData.CONTENT_URI, FileTransferData.KEY_FT_ID,
-                FileTransferData.KEY_CHAT_ID, SELECTION_ALL_ONE_TO_MANY_FILETRANSFERS);
+                FileTransferData.KEY_CHAT_ID, SELECTION_ALL_ONETOMANY_FILETRANSFERS);
         mFileTransferService = fileTransferService;
         mImService = imService;
     }
 
     /**
-     * Deletion of all file transfers that belong to the specified one-to-many chat.
+     * Deletion of all file transfers from a specified one-to-many chat.
      *
      * @param fileTransferService the file transfer service impl
      * @param imService the IM service
@@ -74,7 +76,7 @@ public class OneToManyFileTransferDeleteTask extends DeleteTask.GroupedByChatId 
     public OneToManyFileTransferDeleteTask(FileTransferServiceImpl fileTransferService,
             InstantMessagingService imService, LocalContentResolver contentResolver, String chatId) {
         super(contentResolver, FileTransferData.CONTENT_URI, FileTransferData.KEY_FT_ID,
-                FileTransferData.KEY_CHAT_ID, SELECTION_FILETRANSFER_BY_CHATID, chatId);
+                FileTransferData.KEY_CHAT_ID, SELECTION_ONETOMANY_FILETRANSFER_BY_CHATID, chatId);
         mFileTransferService = fileTransferService;
         mImService = imService;
     }
@@ -99,16 +101,17 @@ public class OneToManyFileTransferDeleteTask extends DeleteTask.GroupedByChatId 
 
     @Override
     protected void onRowDelete(String chatId, String transferId) throws PayloadException {
-        FileSharingSession session = mImService.getFileSharingSession(transferId);
-        if (session == null) {
-            mFileTransferService.ensureThumbnailIsDeleted(transferId);
-            mFileTransferService.ensureFileCopyIsDeletedIfExisting(transferId);
-            mFileTransferService.removeOneToManyFileTransfer(transferId);
-            return;
+        if (isSingleRowDelete()) {
+            mLocalContentResolver.delete(GroupDeliveryInfoData.CONTENT_URI,
+                    SELECTION_GROUPDELIVERY_BY_FILEID, new String[] {
+                        transferId
+                    });
         }
-
         try {
-            session.deleteSession();
+            FileSharingSession session = mImService.getFileSharingSession(transferId);
+            if (session != null) {
+                session.deleteSession();
+            }
         } catch (NetworkException e) {
             /*
              * If network is lost during a delete operation the remaining part of the delete
@@ -126,6 +129,12 @@ public class OneToManyFileTransferDeleteTask extends DeleteTask.GroupedByChatId 
 
     @Override
     protected void onCompleted(String chatId, Set<String> transferIds) {
+        if (!isSingleRowDelete()) {
+            mLocalContentResolver.delete(GroupDeliveryInfoData.CONTENT_URI,
+                    SELECTION_GROUPDELIVERY_BY_CHATID, new String[] {
+                        chatId
+                    });
+        }
         mFileTransferService.broadcastOneToManyFileTransfersDeleted(chatId, transferIds);
     }
 

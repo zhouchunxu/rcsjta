@@ -1,18 +1,21 @@
-/*
+/*******************************************************************************
+ * Software Name : RCS IMS Stack
+ *
  * Copyright (C) 2015 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 
 package com.gsma.rcs.provider.messaging;
 
@@ -34,8 +37,10 @@ public class OneToOneChatMessageDeleteTask extends DeleteTask.GroupedByContactId
     private static final Logger sLogger = Logger.getLogger(OneToOneChatMessageDeleteTask.class
             .getName());
 
-    private static final String SELECTION_ONETOONE_CHATMESSAGES = MessageData.KEY_CHAT_ID + "="
-            + MessageData.KEY_CONTACT;
+//    private static final String SELECTION_ONETOONE_CHATMESSAGES = MessageData.KEY_CHAT_ID + "="
+//            + MessageData.KEY_CONTACT;
+    private static final String SELECTION_ONETOONE_CHATMESSAGES =  MessageData.KEY_CONTACT + " != "
+        +" NULL AND " + MessageData.KEY_CONTACT + " has ';'";
 
     private static final String SELECTION_ONETOONE_CHATMESSAGES_BY_CHATID = MessageData.KEY_CHAT_ID
             + "=?";
@@ -61,25 +66,8 @@ public class OneToOneChatMessageDeleteTask extends DeleteTask.GroupedByContactId
     }
 
     /**
-     * Deletion of a specific chat message.
-     * 
-     * @param chatService the chat service impl
-     * @param imService the IM service
-     * @param contentResolver the content resolver
-     * @param messageId the message id
-     */
-    public OneToOneChatMessageDeleteTask(ChatServiceImpl chatService,
-            InstantMessagingService imService, LocalContentResolver contentResolver,
-            String messageId) {
-        super(contentResolver, MessageData.CONTENT_URI, MessageData.KEY_MESSAGE_ID,
-                MessageData.KEY_CONTACT, null, messageId);
-        mChatService = chatService;
-        mImService = imService;
-    }
-
-    /**
      * Deletion of a specific one to one conversation.
-     * 
+     *
      * @param chatService the chat service impl
      * @param imService the IM service
      * @param contentResolver the content resolver
@@ -96,21 +84,41 @@ public class OneToOneChatMessageDeleteTask extends DeleteTask.GroupedByContactId
         setAllAtOnce(true);
     }
 
+    /**
+     * Deletion of a specific chat message.
+     *
+     * @param chatService the chat service impl
+     * @param imService the IM service
+     * @param contentResolver the content resolver
+     * @param messageId the message id
+     */
+    public OneToOneChatMessageDeleteTask(ChatServiceImpl chatService,
+            InstantMessagingService imService, LocalContentResolver contentResolver,
+            String messageId) {
+        super(contentResolver, MessageData.CONTENT_URI, MessageData.KEY_MESSAGE_ID,
+                MessageData.KEY_CONTACT, null, messageId);
+        mChatService = chatService;
+        mImService = imService;
+    }
+
     @Override
     protected void onRowDelete(ContactId contact, String msgId) throws PayloadException {
-        if (isSingleRowDelete()) {
-            return;
+        /* Not used */
+    }
 
+    @Override
+    protected void onCompleted(ContactId contact, Set<String> msgIds) {
+        DeliveryExpirationManager expirationManager = mImService.getDeliveryExpirationManager();
+        for (String messageId : msgIds) {
+            expirationManager.cancelDeliveryTimeoutAlarm(messageId);
         }
-        ChatSession session = mImService.getOneToOneChatSession(contact);
-        if (session == null) {
-            mChatService.removeOneToOneChat(contact);
-            return;
 
-        }
         try {
-            session.deleteSession();
-        } catch (NetworkException e) {
+            ChatSession session = mImService.getOneToOneChatSession(contact);
+            if (session != null) {
+                session.deleteSession();
+            }
+        } catch (NetworkException | PayloadException e) {
             /*
              * If network is lost during a delete operation the remaining part of the delete
              * operation (delete from persistent storage) can succeed to 100% anyway since delete
@@ -121,14 +129,6 @@ public class OneToOneChatMessageDeleteTask extends DeleteTask.GroupedByContactId
             }
         }
         mChatService.removeOneToOneChat(contact);
-    }
-
-    @Override
-    protected void onCompleted(ContactId contact, Set<String> msgIds) {
-        DeliveryExpirationManager expirationManager = mImService.getDeliveryExpirationManager();
-        for (String messageId : msgIds) {
-            expirationManager.cancelDeliveryTimeoutAlarm(messageId);
-        }
         mChatService.broadcastOneToOneMessagesDeleted(contact, msgIds);
     }
 }

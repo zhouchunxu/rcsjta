@@ -1906,6 +1906,22 @@ public class FileTransferServiceImpl extends IFileTransferService.Stub {
     }
 
     /**
+     * Set one-many file transfer state and reason code
+     *
+     * @param fileTransferId the file transfer ID
+     * @param chatId the chat ID
+     * @param state the file transfer state
+     * @param reasonCode the reason code
+     */
+    public void setOneToManyFileTransferStateAndReasonCode(String fileTransferId, String chatId,
+            State state, ReasonCode reasonCode) {
+        if (mMessagingLog.setFileTransferStateAndReasonCode(fileTransferId, state, reasonCode)) {
+            mOneToManyFileTransferBroadcaster.broadcastStateChanged(chatId, fileTransferId, state,
+                    reasonCode);
+        }
+    }
+
+    /**
      * Set group file transfer state and reason code
      * 
      * @param fileTransferId the file transfer ID
@@ -1923,6 +1939,10 @@ public class FileTransferServiceImpl extends IFileTransferService.Stub {
 
     public void broadcastOneToOneFileTransferDeleted(ContactId contact, Set<String> transferIds) {
         mOneToOneFileTransferBroadcaster.broadcastFileTransferDeleted(contact, transferIds);
+    }
+
+    public void broadcastOneToManyFileTransfersDeleted(String chatId, Set<String> transferIds) {
+        mOneToManyFileTransferBroadcaster.broadcastFileTransfersDeleted(chatId, transferIds);
     }
 
     public void broadcastGroupFileTransfersDeleted(String chatId, Set<String> transferIds) {

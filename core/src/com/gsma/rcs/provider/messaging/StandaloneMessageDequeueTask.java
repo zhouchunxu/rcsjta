@@ -61,12 +61,8 @@ public class StandaloneMessageDequeueTask extends DequeueTask {
         if (logActivated) {
             mLogger.debug("Execute task to dequeue standalone messages for chatId ".concat(mChatId));
         }
-        Set<ContactId> recipients = null;
-        String convId = null;
         String msgId = null;
         String mimeType = null;
-        String content = null;
-        boolean barCycle = false;
         Cursor cursor = null;
         try {
             if (!isImsConnected()) {
@@ -82,13 +78,10 @@ public class StandaloneMessageDequeueTask extends DequeueTask {
                 return;
             }
             cursor = mMessagingLog.getQueuedStandaloneMessages(mChatId);
-            int convIdIdx = cursor.getColumnIndexOrThrow(MessageData.KEY_CONVERSATION_ID);
             int msgIdIdx = cursor.getColumnIndexOrThrow(MessageData.KEY_MESSAGE_ID);
             int contactIdx = cursor.getColumnIndexOrThrow(MessageData.KEY_CONTACT);
             int contentIdx = cursor.getColumnIndexOrThrow(MessageData.KEY_CONTENT);
             int mimeTypeIdx = cursor.getColumnIndexOrThrow(MessageData.KEY_MIME_TYPE);
-            //int pcIdx = cursor.getColumnIndexOrThrow(MessageData.KEY_PC_MSG);
-            int barCycleIdx = cursor.getColumnIndexOrThrow(MessageData.KEY_BAR_CYCLE);
             while (cursor.moveToNext()) {
                 try {
                     if (!isImsConnected()) {
@@ -103,34 +96,28 @@ public class StandaloneMessageDequeueTask extends DequeueTask {
                         }
                         return;
                     }
-                    convId = cursor.getString(convIdIdx);
                     msgId = cursor.getString(msgIdIdx);
                     mimeType = cursor.getString(mimeTypeIdx);
-                    content = cursor.getString(contentIdx);
-                    String semiSepNumbers = cursor.getString(contactIdx);
-                    recipients = ContactUtil.parseUniqueEncodedRecipients(semiSepNumbers);
-                    boolean isOneToMany = ContactUtil.isMultiplePhoneNumber(numbers);
                     if (!isPossibleToDequeueStandaloneMessage()) {
                         setStandaloneMessageAsFailedDequeue(mChatId, msgId, mimeType);
                         continue;
                     }
-                    if (!isAllowedToDequeueStandaloneMessage(/*recipients*/)) {
+                    if (!isAllowedToDequeueStandaloneMessage(/* recipients */)) {
                         continue;
                     }
-                    if ( barCycle) {
-                        if (!isAllowedToDequeueOneToOneBarIm(null)) {
-                            continue;
-                        }
-                    }
-
+                    String content = cursor.getString(contentIdx);
+                    String contactNumber = cursor.getString(contactIdx);
+                    boolean isOneToOne = !contactNumber.contains(";");
+                    ContactId contactId = ContactUtil.createContactIdFromTrustedData(contactNumber);
                     long timestamp = System.currentTimeMillis();
                     /* For outgoing message, timestampSent = timestamp */
-                    ChatMessage msg = ChatUtils.createChatMessage(msgId, mimeType, content, null,
+                    ChatMessage msg = ChatUtils.createChatMessage(msgId, mimeType, content, contactId,
                             null, timestamp, timestamp);
-                    if (isOneToMany) {
+                    if (isOneToOne) {
                         mSmService.dequeueOneToOneStandaloneMessage(mChatId, msg);
                     } else {
-                        mSmService.dequeueOneToManyStandaloneMessage(mChatId, null, msg);
+                        Set<ContactId> recipients = null;// ContactUtil.parseRecipients(contactNumber);
+                        mSmService.dequeueOneToManyStandaloneMessage(mChatId, recipients, msg);
                     }
 
                 } catch (NetworkException e) {
@@ -138,6 +125,7 @@ public class StandaloneMessageDequeueTask extends DequeueTask {
                         mLogger.debug("Failed to dequeue standalone message '" + msgId
                                 + "' message for chat '" + mChatId + "' due to: " + e.getMessage());
                     }
+                    setStandaloneMessageAsFailedDequeue(mChatId, msgId, mimeType);
                 } catch (PayloadException e) {
                     mLogger.error("Failed to dequeue standalone message '" + msgId
                             + "' message for chat '" + mChatId + "'", e);

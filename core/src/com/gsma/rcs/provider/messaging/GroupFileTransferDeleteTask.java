@@ -1,18 +1,21 @@
-/*
+/*******************************************************************************
+ * Software Name : RCS IMS Stack
+ *
  * Copyright (C) 2015 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 
 package com.gsma.rcs.provider.messaging;
 
@@ -37,6 +40,12 @@ public class GroupFileTransferDeleteTask extends DeleteTask.GroupedByChatId {
             + " IS NULL";
 
     private static final String SELECTION_FILETRANSFER_BY_CHATID = FileTransferData.KEY_CHAT_ID
+            + "=?";
+
+    private static final String SELECTION_GROUPDELIVERY_BY_CHATID = GroupDeliveryInfoData.KEY_CHAT_ID
+            + "=?";
+
+    private static final String SELECTION_GROUPDELIVERY_BY_FILEID = GroupDeliveryInfoData.KEY_ID
             + "=?";
 
     private final FileTransferServiceImpl mFileTransferService;
@@ -94,16 +103,17 @@ public class GroupFileTransferDeleteTask extends DeleteTask.GroupedByChatId {
 
     @Override
     protected void onRowDelete(String chatId, String transferId) throws PayloadException {
-        FileSharingSession session = mImService.getFileSharingSession(transferId);
-        if (session == null) {
-            mFileTransferService.ensureThumbnailIsDeleted(transferId);
-            mFileTransferService.ensureFileCopyIsDeletedIfExisting(transferId);
-            mFileTransferService.removeGroupFileTransfer(transferId);
-            return;
-
+        if (isSingleRowDelete()) {
+            mLocalContentResolver.delete(GroupDeliveryInfoData.CONTENT_URI,
+                    SELECTION_GROUPDELIVERY_BY_FILEID, new String[] {
+                        transferId
+                    });
         }
         try {
-            session.deleteSession();
+            FileSharingSession session = mImService.getFileSharingSession(transferId);
+            if (session != null) {
+                session.deleteSession();
+            }
         } catch (NetworkException e) {
             /*
              * If network is lost during a delete operation the remaining part of the delete
@@ -121,6 +131,12 @@ public class GroupFileTransferDeleteTask extends DeleteTask.GroupedByChatId {
 
     @Override
     protected void onCompleted(String chatId, Set<String> transferIds) {
+        if (!isSingleRowDelete()) {
+            mLocalContentResolver.delete(GroupDeliveryInfoData.CONTENT_URI,
+                    SELECTION_GROUPDELIVERY_BY_CHATID, new String[] {
+                            chatId
+                    });
+        }
         mFileTransferService.broadcastGroupFileTransfersDeleted(chatId, transferIds);
     }
 

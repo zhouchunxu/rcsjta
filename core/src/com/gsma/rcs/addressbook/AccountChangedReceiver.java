@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2015 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +62,7 @@ public class AccountChangedReceiver extends BroadcastReceiver {
                     LocalContentResolver localContentResolver = new LocalContentResolver(
                             contentResolver);
                     RcsSettings rcsSettings = RcsSettings.getInstance(localContentResolver);
-                    AndroidFactory.setApplicationContext(context, rcsSettings);
+                    AndroidFactory.setApplicationContext(context.getApplicationContext(), rcsSettings);
                     ContactManager contactManager = ContactManager.getInstance(context,
                             contentResolver, localContentResolver, rcsSettings);
                     RcsAccountManager accountUtility = RcsAccountManager.getInstance(context,
