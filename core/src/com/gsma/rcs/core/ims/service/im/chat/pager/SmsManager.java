@@ -16,7 +16,7 @@
  * limitations under the License.
  ******************************************************************************/
 
-package com.gsma.rcs.core.ims.service.im.standalone;
+package com.gsma.rcs.core.ims.service.im.chat.pager;
 
 import static com.gsma.rcs.utils.StringUtils.UTF8;
 
@@ -35,6 +35,7 @@ import com.gsma.rcs.core.ims.service.im.InstantMessagingService;
 import com.gsma.rcs.core.ims.service.im.chat.ChatMessage;
 import com.gsma.rcs.core.ims.service.im.chat.ChatUtils;
 import com.gsma.rcs.core.ims.service.im.chat.ContributionIdGenerator;
+import com.gsma.rcs.core.ims.service.im.chat.LargeMessageModeSession;
 import com.gsma.rcs.core.ims.service.im.chat.cpim.CpimMessage;
 import com.gsma.rcs.core.ims.service.im.chat.imdn.ImdnManager;
 import com.gsma.rcs.provider.contact.ContactManager;
@@ -52,8 +53,6 @@ import android.net.Uri;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import java.util.Vector;
 
@@ -78,8 +77,6 @@ public class SmsManager extends Thread {
 
     private final RcsSettings mRcsSettings;
 
-    private final List<StandaloneMessagingSessionListener> mListeners = new ArrayList<>();
-
     private final FifoBuffer mBuffer = new FifoBuffer();
 
     private final static Logger sLogger = Logger.getLogger(SmsManager.class.getSimpleName());
@@ -98,8 +95,6 @@ public class SmsManager extends Thread {
         mImdnManager = imService.getImdnManager();
         mRcsSettings = rcsSettings;
     }
-
-
 
     /**
      * Terminate manager
@@ -127,15 +122,15 @@ public class SmsManager extends Thread {
                     sendOneToOnePagerMessageImmediately(message);
                 }
                 // Notify listeners
-                for (StandaloneMessagingSessionListener listener : getListeners()) {
-                    listener.onMessageSent(chatId, msgId, mimeType);
-                }
+                // for (StandaloneMessagingSessionListener listener : getListeners()) {
+                // listener.onMessageSent(chatId, msgId, mimeType);
+                // }
 
             } catch (NetworkException | PayloadException | RuntimeException e) {
                 sLogger.error("Failed to send message for chatId: " + chatId, e);
-                for (StandaloneMessagingSessionListener listener : getListeners()) {
-                    listener.onMessageFailedSend(chatId, msgId, mimeType);
-                }
+                // for (StandaloneMessagingSessionListener listener : getListeners()) {
+                // listener.onMessageFailedSend(chatId, msgId, mimeType);
+                // }
             }
         }
     }
@@ -155,9 +150,9 @@ public class SmsManager extends Thread {
         if (contentLength > MAX_PAGER_MODE_SIZE) {
             final LargeMessageModeSession newSession = mImService.createLargeMessageModeSession(
                     chatId, chatMsg);
-            for (StandaloneMessagingSessionListener listener : getListeners()) {
-                newSession.addEventListener(listener);
-            }
+            // for (StandaloneMessagingSessionListener listener : getListeners()) {
+            // //newSession.addEventListener(listener);
+            // }
             newSession.start();
         } else {
             // Add request in the buffer for background processing
@@ -183,30 +178,14 @@ public class SmsManager extends Thread {
         if ((contentLength + resourceList.length()) > MAX_PAGER_MODE_SIZE) {
             final LargeMessageModeSession newSession = mImService
                     .createOneToManyLargeMessageModeSession(chatId, remoteContacts, chatMsg);
-            for (StandaloneMessagingSessionListener listener : getListeners()) {
-                newSession.addEventListener(listener);
-            }
+            // for (StandaloneMessagingSessionListener listener : getListeners()) {
+            // // newSession.addEventListener(listener);
+            // }
             newSession.start();
         } else {
             // Add request in the buffer for background processing
             PagerMessage pager = new PagerMessage(chatId, remoteContacts, chatMsg);
             mBuffer.addObject(pager);
-        }
-    }
-
-    /**
-     * Receive a new standalone messaging invitation
-     *
-     * @param session Chat session
-     */
-    public void receiveLargeMessageModeInvitation(LargeMessageModeSession session) {
-        ContactId contact = session.getRemoteContact();
-        if (sLogger.isActivated()) {
-            sLogger.info("Receive large message invitation from " + contact + " (display="
-                    + session.getRemoteDisplayName() + ")");
-        }
-        for (StandaloneMessagingSessionListener listener : getListeners()) {
-            session.addEventListener(listener);
         }
     }
 
@@ -410,33 +389,6 @@ public class SmsManager extends Thread {
         } catch (InvalidArgumentException | ParseException e) {
             throw new NetworkException("Set proxy authorization failed");
         }
-    }
-
-    /**
-     * Add a listener for receiving events
-     *
-     * @param listener Listener
-     */
-    public void addListener(StandaloneMessagingSessionListener listener) {
-        mListeners.add(listener);
-    }
-
-    /**
-     * Remove a listener
-     *
-     * @param listener Listener to remove
-     */
-    public void removeListener(StandaloneMessagingSessionListener listener) {
-        mListeners.remove(listener);
-    }
-
-    /**
-     * Returns the event listeners
-     *
-     * @return Listeners
-     */
-    public List<StandaloneMessagingSessionListener> getListeners() {
-        return mListeners;
     }
 
     /**

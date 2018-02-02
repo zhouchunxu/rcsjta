@@ -222,6 +222,15 @@ public interface IMessageLog {
     Cursor getQueuedOneToOneChatMessages(ContactId contact);
 
     /**
+     * Get all one-to-many chat messages for specific chatId that are in queued state in ascending
+     * order of timestamp
+     *
+     * @param chatId Chat ID
+     * @return Cursor
+     */
+    Cursor getQueuedOneToManyChatMessages(String chatId);
+
+    /**
      * Gets group chat events per contacts for chat ID
      * 
      * @param chatId Chat ID

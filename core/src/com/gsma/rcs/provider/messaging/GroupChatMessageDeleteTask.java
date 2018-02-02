@@ -1,18 +1,21 @@
-/*
+/*******************************************************************************
+ * Software Name : RCS IMS Stack
+ *
  * Copyright (C) 2015 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 
 package com.gsma.rcs.provider.messaging;
 
@@ -54,6 +57,7 @@ public class GroupChatMessageDeleteTask extends DeleteTask.GroupedByChatId {
                 MessageData.KEY_CHAT_ID, SELECTION_GROUP_CHATMESSAGES);
         mChatService = chatService;
         mImService = imService;
+        setAllAtOnce(true);
     }
 
     /**
@@ -70,6 +74,7 @@ public class GroupChatMessageDeleteTask extends DeleteTask.GroupedByChatId {
                 MessageData.KEY_CHAT_ID, SELECTION_CHATMESSAGES_BY_CHATID, chatId);
         mChatService = chatService;
         mImService = imService;
+        setAllAtOnce(true);
     }
 
     /**
@@ -94,16 +99,12 @@ public class GroupChatMessageDeleteTask extends DeleteTask.GroupedByChatId {
     protected void onRowDelete(String chatId, String msgId) throws PayloadException {
         if (isSingleRowDelete()) {
             return;
-
-        }
-        ChatSession session = mImService.getGroupChatSession(chatId);
-        if (session == null) {
-            mChatService.removeGroupChat(chatId);
-            return;
-
         }
         try {
-            session.deleteSession();
+            ChatSession session = mImService.getGroupChatSession(chatId);
+            if (session != null) {
+                session.deleteSession();
+            }
         } catch (NetworkException e) {
             /*
              * If network is lost during a delete operation the remaining part of the delete
@@ -121,5 +122,4 @@ public class GroupChatMessageDeleteTask extends DeleteTask.GroupedByChatId {
     protected void onCompleted(String chatId, Set<String> msgIds) {
         mChatService.broadcastGroupChatMessagesDeleted(chatId, msgIds);
     }
-
 }

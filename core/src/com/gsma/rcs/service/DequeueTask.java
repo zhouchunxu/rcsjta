@@ -1,19 +1,21 @@
-/*
+/*******************************************************************************
+ * Software Name : RCS IMS Stack
+ *
  * Copyright (C) 2015 Sony Mobile Communications Inc.
  * Copyright (C) 2017 China Mobile.
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 
 package com.gsma.rcs.service;
 
@@ -96,7 +98,7 @@ public abstract class DequeueTask implements Runnable {
     }
 
     /**
-     * Check if it is possible to dequeue and transfer one-one file
+     * Check if it is possible to dequeue and transfer one-to-one file
      * 
      * @param contact Remote contact
      * @param fileTransferService File transfer service
@@ -116,7 +118,16 @@ public abstract class DequeueTask implements Runnable {
     }
 
     /**
-     * Check if it is possible to dequeue and transfer one-one file
+     * Check if it is possible to dequeue and transfer one-to-many file
+     *
+     * @return boolean
+     */
+    protected boolean isAllowedToDequeueOneToManyFileTransfer(Set<ContactId> contacts) {
+        return isAllowedToDequeueFileTransfer();
+    }
+
+    /**
+     * Check if it is possible to dequeue and transfer group file
      * 
      * @return boolean
      */
@@ -207,6 +218,22 @@ public abstract class DequeueTask implements Runnable {
     }
 
     /**
+     * Check if it is possible to dequeue standalone messages
+     *
+     * @param contacts List of contact ids
+     * @return boolean
+     */
+    protected boolean isPossibleToDequeueOneToManyChatMessage(Set<ContactId> contacts) {
+        if (!mRcsSettings.isStandaloneMessagingSupported()) {
+            if (mLogger.isActivated()) {
+                mLogger.debug("Cannot dequeue standalone messages as standalone messaging feature is not activated!");
+            }
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * Check if it is possible to dequeue group chat messages and group file transfers
      * 
      * @param chatId Chat ID
@@ -282,7 +309,7 @@ public abstract class DequeueTask implements Runnable {
     }
 
     /**
-     * Check if it is possible to dequeue one-one file transfer
+     * Check if it is possible to dequeue one-to-one file transfer
      * 
      * @param contact Remote contact
      * @param file file Uri
@@ -360,7 +387,7 @@ public abstract class DequeueTask implements Runnable {
     }
 
     /**
-     * Set one-one chat message as failed
+     * Set one-to-one chat message as failed
      * 
      * @param contact Remote contact
      * @param msgId message ID
@@ -369,6 +396,19 @@ public abstract class DequeueTask implements Runnable {
     protected void setOneToOneChatMessageAsFailedDequeue(ContactId contact, String msgId,
             String mimeType) {
         mChatService.setOneToOneChatMessageStatusAndReasonCode(msgId, mimeType, contact,
+                Status.FAILED, Content.ReasonCode.FAILED_SEND);
+    }
+
+    /**
+     * Set one-to-many chat message as failed
+     *
+     * @param chatId Chat id
+     * @param msgId Message ID
+     * @param mimeType mime type
+     */
+    protected void setOneToManyChatMessageAsFailedDequeue(String chatId, String msgId,
+            String mimeType) {
+        mChatService.setOneToManyChatMessageStatusAndReasonCode(chatId, msgId, mimeType,
                 Status.FAILED, Content.ReasonCode.FAILED_SEND);
     }
 
@@ -385,7 +425,7 @@ public abstract class DequeueTask implements Runnable {
     }
 
     /**
-     * Set one-one file transfer as failed
+     * Set one-to-one file transfer as failed
      * 
      * @param contact Remote contact
      * @param fileTransferId File transfer ID
@@ -396,7 +436,7 @@ public abstract class DequeueTask implements Runnable {
     }
 
     /**
-     * Set one-many file transfer as failed
+     * Set one-to-many file transfer as failed
      *
      * @param chatId Chat ID
      * @param fileTransferId File transfer ID

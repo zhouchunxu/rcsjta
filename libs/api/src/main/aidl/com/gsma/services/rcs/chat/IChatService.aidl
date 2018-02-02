@@ -4,6 +4,8 @@ import com.gsma.services.rcs.IRcsServiceRegistrationListener;
 import com.gsma.services.rcs.chat.IChatMessage;
 import com.gsma.services.rcs.chat.IOneToOneChatListener;
 import com.gsma.services.rcs.chat.IOneToOneChat;
+import com.gsma.services.rcs.chat.IOneToManyChatListener;
+import com.gsma.services.rcs.chat.IOneToManyChat;
 import com.gsma.services.rcs.chat.IGroupChatListener;
 import com.gsma.services.rcs.chat.IGroupChat;
 import com.gsma.services.rcs.chat.IChatServiceConfiguration;
@@ -24,41 +26,53 @@ interface IChatService {
 
 	void removeEventListener(IRcsServiceRegistrationListener listener);
 
-	IChatServiceConfiguration getConfiguration();
+	int getServiceVersion();
 
-	IGroupChat initiateGroupChat(in List<ContactId> contacts, in String subject);
+	ICommonServiceConfiguration getCommonConfiguration();
+
+	IChatServiceConfiguration getConfiguration();
 
 	IOneToOneChat getOneToOneChat(in ContactId contact);
 
+	IOneToManyChat getOneToManyChat(in List<ContactId> contacts);
+
 	IGroupChat getGroupChat(in String chatId);
 
+	IGroupChat initiateGroupChat(in List<ContactId> contacts, in String subject);
+
+//	IOneToManyChat initiateOneToManyChat(in List<ContactId> contacts);
+
 	void markMessageAsRead(in String msgId);
-
-	void addEventListener3(in IGroupChatListener listener);
-
-	void removeEventListener3(in IGroupChatListener listener);
 
 	void addEventListener2(in IOneToOneChatListener listener);
 
 	void removeEventListener2(in IOneToOneChatListener listener);
 
-	int getServiceVersion();
+	void addEventListener3(in IOneToManyChatListener listener);
+
+	void removeEventListener3(in IOneToManyChatListener listener);
+
+	void addEventListener4(in IGroupChatListener listener);
+
+	void removeEventListener4(in IGroupChatListener listener);
 
 	IChatMessage getChatMessage(in String msgId);
-
-	ICommonServiceConfiguration getCommonConfiguration();
 
 	boolean isAllowedToInitiateGroupChat();
 
 	boolean isAllowedToInitiateGroupChat2(in ContactId contact);
 
-//	void reportMessage(in String msgId);
+	void reportMessage(in String msgId);
 
 	void deleteOneToOneChats();
+
+	void deleteOneToManyChats();
 
 	void deleteGroupChats();
 
 	void deleteOneToOneChat(in ContactId contact);
+
+	void deleteOneToManyChat(in String chatId);
 
 	void deleteGroupChat(in String chatId);
 

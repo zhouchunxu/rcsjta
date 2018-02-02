@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2010-2016 Orange.
  * Copyright (C) 2014 Sony Mobile Communications Inc.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,7 +108,7 @@ public class ChatServiceConfiguration {
     }
 
     /**
-     * Returns the maximum one-to-one chat message s length can have.
+     * Returns maximum length of an one-to-one chat message.
      * <p>
      * The length is the number of bytes of the message encoded in UTF-8.
      * 
@@ -117,6 +118,23 @@ public class ChatServiceConfiguration {
     public int getOneToOneChatMessageMaxLength() throws RcsGenericException {
         try {
             return mIConfig.getOneToOneChatMessageMaxLength();
+
+        } catch (Exception e) {
+            throw new RcsGenericException(e);
+        }
+    }
+
+    /**
+     * Return maximum length of an one-to-many chat message.
+     * <p>
+     * The length is the number of bytes of the message encoded in UTF-8.
+     *
+     * @return int Number of bytes
+     * @throws RcsGenericException
+     */
+    public int getOneToManyChatMessageMaxLength() throws RcsGenericException {
+        try {
+            return mIConfig.getOneToManyChatMessageMaxLength();
 
         } catch (Exception e) {
             throw new RcsGenericException(e);
@@ -157,29 +175,13 @@ public class ChatServiceConfiguration {
         }
     }
 
-
-    /**
-     * Returns the standalone message size limit. It returns 0 if there is no limitation.
-     * 
-     * @return long Size in bytes
-     * @throws RcsGenericException
-     */
-    public long getStandaloneMessageMaxSize() throws RcsGenericException {
-        try {
-            return mIConfig.getStandaloneMessageMaxLength();
-
-        } catch (Exception e) {
-            throw new RcsGenericException(e);
-        }
-    }
-
     /**
      * Is standalone messaging supported
      * 
      * @return boolean Returns true if standalone messaging is supported else returns false
      * @throws RcsGenericException
      */
-    public boolean isStandaloneMessagingSupported() throws RcsGenericException {
+    public boolean isChatSupported() throws RcsGenericException {
         try {
             return mIConfig.isStandaloneMessagingSupported();
 
@@ -220,25 +222,8 @@ public class ChatServiceConfiguration {
     }
 
     /**
-     * Does displayed delivery report activated on received chat messages.
-     * <p>
-     * Only applicable to one to one chat message.
-     * 
-     * @return boolean
-     * @throws RcsGenericException
-     */
-    public boolean isRespondToDisplayReportsEnabled() throws RcsGenericException {
-        try {
-            return mIConfig.isRespondToDisplayReportsEnabled();
-
-        } catch (Exception e) {
-            throw new RcsGenericException(e);
-        }
-    }
-
-    /**
      * Return maximum length of a geoloc label
-     * 
+     *
      * @return int Number of bytes
      * @throws RcsGenericException
      */
@@ -253,13 +238,30 @@ public class ChatServiceConfiguration {
 
     /**
      * Get geoloc expiration time
-     * 
+     *
      * @return int Time in milliseconds
      * @throws RcsGenericException
      */
     public long getGeolocExpirationTime() throws RcsGenericException {
         try {
             return mIConfig.getGeolocExpirationTime();
+
+        } catch (Exception e) {
+            throw new RcsGenericException(e);
+        }
+    }
+
+    /**
+     * Does displayed delivery report activated on received chat messages.
+     * <p>
+     * Only applicable to one to one chat message.
+     *
+     * @return boolean
+     * @throws RcsGenericException
+     */
+    public boolean isRespondToDisplayReportsEnabled() throws RcsGenericException {
+        try {
+            return mIConfig.isRespondToDisplayReportsEnabled();
 
         } catch (Exception e) {
             throw new RcsGenericException(e);

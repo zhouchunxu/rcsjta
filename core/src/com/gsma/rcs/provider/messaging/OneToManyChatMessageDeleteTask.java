@@ -117,6 +117,6 @@ public class OneToManyChatMessageDeleteTask extends DeleteTask.GroupedByChatId {
                         chatId
                     });
         }
-        mImService.onOneToManyChatMessagesDeleted(chatId, msgIds);
+        mChatService.broadcastOneToManyMessagesDeleted(chatId, msgIds);
     }
 }

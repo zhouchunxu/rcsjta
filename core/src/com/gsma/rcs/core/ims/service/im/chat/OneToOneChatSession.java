@@ -552,4 +552,5 @@ public abstract class OneToOneChatSession extends ChatSession {
             ((OneToOneChatSessionListener) listener).onImError(error, msgId, msg.getMimeType());
         }
     }
+
 }

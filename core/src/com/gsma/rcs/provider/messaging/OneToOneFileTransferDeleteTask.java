@@ -60,28 +60,12 @@ public class OneToOneFileTransferDeleteTask extends DeleteTask.GroupedByContactI
                 FileTransferData.KEY_CONTACT, SELECTION_ALL_ONETOONE_FILETRANSFERS);
         mFileTransferService = fileTransferService;
         mImService = imService;
-    }
-
-    /**
-     * Deletion of a specific file transfer.
-     * 
-     * @param fileTransferService the file transfer service impl
-     * @param imService the IM service
-     * @param contentResolver the content resolver
-     * @param transferId the transfer id
-     */
-    public OneToOneFileTransferDeleteTask(FileTransferServiceImpl fileTransferService,
-            InstantMessagingService imService, LocalContentResolver contentResolver,
-            String transferId) {
-        super(contentResolver, FileTransferData.CONTENT_URI, FileTransferData.KEY_FT_ID,
-                FileTransferData.KEY_CONTACT, null, transferId);
-        mFileTransferService = fileTransferService;
-        mImService = imService;
+        setAllAtOnce(true);
     }
 
     /**
      * Deletion of all file transfers from a specific one to one conversation.
-     * 
+     *
      * @param fileTransferService the file transfer service impl
      * @param imService the IM service
      * @param contentResolver the content resolver
@@ -93,6 +77,24 @@ public class OneToOneFileTransferDeleteTask extends DeleteTask.GroupedByContactI
         super(contentResolver, FileTransferData.CONTENT_URI, FileTransferData.KEY_FT_ID,
                 FileTransferData.KEY_CONTACT, SELECTION_ONETOONE_FILETRANSFER_BY_CHATID, contact
                         .toString());
+        mFileTransferService = fileTransferService;
+        mImService = imService;
+        setAllAtOnce(true);
+    }
+
+    /**
+     * Deletion of a specific file transfer.
+     *
+     * @param fileTransferService the file transfer service impl
+     * @param imService the IM service
+     * @param contentResolver the content resolver
+     * @param transferId the transfer id
+     */
+    public OneToOneFileTransferDeleteTask(FileTransferServiceImpl fileTransferService,
+            InstantMessagingService imService, LocalContentResolver contentResolver,
+            String transferId) {
+        super(contentResolver, FileTransferData.CONTENT_URI, FileTransferData.KEY_FT_ID,
+                FileTransferData.KEY_CONTACT, null, transferId);
         mFileTransferService = fileTransferService;
         mImService = imService;
     }
@@ -125,6 +127,6 @@ public class OneToOneFileTransferDeleteTask extends DeleteTask.GroupedByContactI
         for (String transferId : transferIds) {
             expirationManager.cancelDeliveryTimeoutAlarm(transferId);
         }
-        mFileTransferService.broadcastOneToOneFileTransferDeleted(contact, transferIds);
+        mFileTransferService.broadcastOneToOneFileTransfersDeleted(contact, transferIds);
     }
 }

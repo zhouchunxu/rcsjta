@@ -1,11 +1,11 @@
-package com.gsma.services.rcs.chat.sms;
+package com.gsma.services.rcs.chat;
 
 import com.gsma.services.rcs.contact.ContactId;
 
 /**
- * Callback methods for 1-N standalone messaging events
+ * One-to-Many Chat event listener
  */
-interface IOneToManyStandaloneMessagingListener {
+interface IOneToManyChatListener {
 
 	void onMessageStatusChanged(in String chatId, in String mimeType, in String msgId,
 			in int status, in int reasonCode);

@@ -63,6 +63,7 @@ public class OneToManyFileTransferDeleteTask extends DeleteTask.GroupedByChatId 
                 FileTransferData.KEY_CHAT_ID, SELECTION_ALL_ONETOMANY_FILETRANSFERS);
         mFileTransferService = fileTransferService;
         mImService = imService;
+        setAllAtOnce(true);
     }
 
     /**
@@ -79,6 +80,7 @@ public class OneToManyFileTransferDeleteTask extends DeleteTask.GroupedByChatId 
                 FileTransferData.KEY_CHAT_ID, SELECTION_ONETOMANY_FILETRANSFER_BY_CHATID, chatId);
         mFileTransferService = fileTransferService;
         mImService = imService;
+        setAllAtOnce(true);
     }
 
     /**

@@ -13,11 +13,13 @@ interface IChatServiceConfiguration {
 
 	int getGroupChatMaxParticipants();
 
-	int getGroupChatMessageMaxLength();
-
 	int getGroupChatMinParticipants();
 
 	int getGroupChatSubjectMaxLength();
+
+	int getGroupChatMessageMaxLength();
+
+	int getOneToManyChatMessageMaxLength();
 
 	int getOneToOneChatMessageMaxLength();
 
@@ -25,7 +27,7 @@ interface IChatServiceConfiguration {
 
 	boolean isStandaloneMessagingSupported();
 
-	//boolean isChatSupported();
+//	boolean isChatSupported();
 
 	boolean isChatWarnSF();
 

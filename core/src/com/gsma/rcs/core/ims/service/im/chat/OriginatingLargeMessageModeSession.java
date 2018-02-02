@@ -16,7 +16,7 @@
  * limitations under the License.
  ******************************************************************************/
 
-package com.gsma.rcs.core.ims.service.im.standalone;
+package com.gsma.rcs.core.ims.service.im.chat;
 
 import static com.gsma.rcs.utils.StringUtils.UTF8;
 
@@ -29,11 +29,8 @@ import com.gsma.rcs.core.ims.protocol.msrp.MsrpSession;
 import com.gsma.rcs.core.ims.protocol.sdp.SdpUtils;
 import com.gsma.rcs.core.ims.protocol.sip.SipRequest;
 import com.gsma.rcs.core.ims.service.ImsServiceSession;
+import com.gsma.rcs.core.ims.service.ImsSessionListener;
 import com.gsma.rcs.core.ims.service.im.InstantMessagingService;
-import com.gsma.rcs.core.ims.service.im.chat.ChatError;
-import com.gsma.rcs.core.ims.service.im.chat.ChatMessage;
-import com.gsma.rcs.core.ims.service.im.chat.ChatUtils;
-import com.gsma.rcs.core.ims.service.im.chat.ContributionIdGenerator;
 import com.gsma.rcs.core.ims.service.im.chat.cpim.CpimMessage;
 import com.gsma.rcs.provider.contact.ContactManager;
 import com.gsma.rcs.provider.contact.ContactManagerException;
@@ -214,10 +211,9 @@ public class OriginatingLargeMessageModeSession extends LargeMessageModeSession 
             closeMediaSession();
             closeSession(TerminationReason.TERMINATION_BY_USER);
             removeSession();
-            String chatId = getConversationID();
             String mimeType = mMessagingLog.getMessageMimeType(msgId);
-            for (StandaloneMessagingSessionListener listener : getEventListeners()) {
-                listener.onMessageSent(chatId, msgId, mimeType);
+            for (ImsSessionListener listener : getListeners()) {
+                ((ChatSessionListener) listener).onMessageSent(msgId, mimeType);
             }
         } catch (PayloadException e) {
             sLogger.error("Failed to notify MSRP data transferred for msgId : " + msgId, e);
@@ -273,20 +269,17 @@ public class OriginatingLargeMessageModeSession extends LargeMessageModeSession 
             }
             closeMediaSession();
             closeSession(ImsServiceSession.TerminationReason.TERMINATION_BY_SYSTEM);
-
             getImsService().getImsModule().getCapabilityService()
                     .requestContactCapabilities(getRemoteContact());
-
             removeSession();
 
             if (isMsgTransferred()) {
                 return;
             }
             if ((msgId != null) && MsrpSession.TypeMsrpChunk.TextMessage.equals(typeMsrpChunk)) {
-                String chatId = getConversationID();
                 String mimeType = mMessagingLog.getMessageMimeType(msgId);
-                for (StandaloneMessagingSessionListener listener : getEventListeners()) {
-                    listener.onMessageFailedSend(chatId, msgId, mimeType);
+                for (ImsSessionListener listener : getListeners()) {
+                    ((ChatSessionListener) listener).onMessageFailedSend(msgId, mimeType);
                 }
             } else {
                 // do nothing

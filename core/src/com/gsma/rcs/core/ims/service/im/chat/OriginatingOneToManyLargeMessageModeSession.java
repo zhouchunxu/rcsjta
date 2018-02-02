@@ -16,7 +16,7 @@
  * limitations under the License.
  ******************************************************************************/
 
-package com.gsma.rcs.core.ims.service.im.standalone;
+package com.gsma.rcs.core.ims.service.im.chat;
 
 import static com.gsma.rcs.utils.StringUtils.UTF8;
 
@@ -26,8 +26,6 @@ import com.gsma.rcs.core.ims.network.sip.SipUtils;
 import com.gsma.rcs.core.ims.protocol.PayloadException;
 import com.gsma.rcs.core.ims.protocol.sip.SipRequest;
 import com.gsma.rcs.core.ims.service.im.InstantMessagingService;
-import com.gsma.rcs.core.ims.service.im.chat.ChatMessage;
-import com.gsma.rcs.core.ims.service.im.chat.ChatUtils;
 import com.gsma.rcs.provider.contact.ContactManager;
 import com.gsma.rcs.provider.messaging.MessagingLog;
 import com.gsma.rcs.provider.settings.RcsSettings;

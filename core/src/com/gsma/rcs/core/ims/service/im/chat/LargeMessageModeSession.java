@@ -16,7 +16,7 @@
  * limitations under the License.
  ******************************************************************************/
 
-package com.gsma.rcs.core.ims.service.im.standalone;
+package com.gsma.rcs.core.ims.service.im.chat;
 
 import com.gsma.rcs.core.ims.network.NetworkException;
 import com.gsma.rcs.core.ims.network.sip.FeatureTags;
@@ -30,8 +30,6 @@ import com.gsma.rcs.core.ims.service.ImsServiceError;
 import com.gsma.rcs.core.ims.service.ImsServiceSession;
 import com.gsma.rcs.core.ims.service.ImsSessionListener;
 import com.gsma.rcs.core.ims.service.im.InstantMessagingService;
-import com.gsma.rcs.core.ims.service.im.chat.ChatMessage;
-import com.gsma.rcs.core.ims.service.im.chat.ChatUtils;
 import com.gsma.rcs.core.ims.service.im.chat.cpim.CpimMessage;
 import com.gsma.rcs.core.ims.service.im.chat.geoloc.GeolocInfoDocument;
 import com.gsma.rcs.core.ims.service.im.chat.imdn.ImdnDocument;
@@ -54,10 +52,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Large message mode session
+ * Large message mode standalone message session
  */
-public abstract class LargeMessageModeSession extends ImsServiceSession implements
-        ImsSessionListener {
+public abstract class LargeMessageModeSession extends ImsServiceSession {
     /**
      * Boundary tag
      */
@@ -72,6 +69,11 @@ public abstract class LargeMessageModeSession extends ImsServiceSession implemen
      * Chat message has been transferred to remote
      */
     private boolean mMsgTransferred = false;
+
+    /**
+     * Chat message
+     */
+    private final ChatMessage mChatMsg;
 
     /**
      * Chat ID
@@ -92,13 +94,6 @@ public abstract class LargeMessageModeSession extends ImsServiceSession implemen
     private List<String> mAcceptContactTags = new ArrayList<>();
     private String mAcceptTypes = "";
     private String mWrappedTypes = "";
-
-    private List<StandaloneMessagingSessionListener> mEventListeners = new ArrayList<>();
-
-    /**
-     * Chat message
-     */
-    private final ChatMessage mChatMsg;
 
     protected final MessagingLog mMessagingLog;
 
@@ -132,7 +127,6 @@ public abstract class LargeMessageModeSession extends ImsServiceSession implemen
         mImdnManager = imService.getImdnManager();
         mChatMsg = chatMsg;
         mMessagingLog = messagingLog;
-        // Set feature tags
         List<String> featureTags = new ArrayList<>();
         featureTags.add(ChatUtils.getFeatureTagForLargeMessageMode(rcsSettings));
         setFeatureTags(featureTags);
@@ -146,8 +140,6 @@ public abstract class LargeMessageModeSession extends ImsServiceSession implemen
         if (mRcsSettings.isFileTransferHttpSupported()) {
             addWrappedTypes(FileTransferHttpInfoDocument.MIME_TYPE);
         }
-        // Add ImsSessionListener before thread started
-        addListener(this);
     }
 
     /**
@@ -275,32 +267,32 @@ public abstract class LargeMessageModeSession extends ImsServiceSession implemen
         this.mContributionId = id;
     }
 
-    /**
-     * Add a listener for receiving events
-     * 
-     * @param listener Listener
-     */
-    public void addEventListener(StandaloneMessagingSessionListener listener) {
-        mEventListeners.add(listener);
-    }
-
-    /**
-     * Remove a listener
-     * 
-     * @param listener Listener to remove
-     */
-    public void removeEventListener(StandaloneMessagingSessionListener listener) {
-        mEventListeners.remove(listener);
-    }
-
-    /**
-     * Returns the event listeners
-     * 
-     * @return Listeners
-     */
-    public List<StandaloneMessagingSessionListener> getEventListeners() {
-        return mEventListeners;
-    }
+    // /**
+    // * Add a listener for receiving events
+    // *
+    // * @param listener Listener
+    // */
+    // public void addEventListener(ChatSessionListener listener) {
+    // mEventListeners.add(listener);
+    // }
+    //
+    // /**
+    // * Remove a listener
+    // *
+    // * @param listener Listener to remove
+    // */
+    // public void removeEventListener(ChatSessionListener listener) {
+    // mEventListeners.remove(listener);
+    // }
+    //
+    // /**
+    // * Returns the event listeners
+    // *
+    // * @return Listeners
+    // */
+    // public List<ChatSessionListener> getEventListeners() {
+    // return mEventListeners;
+    // }
 
     /**
      * Get chat message
@@ -346,8 +338,8 @@ public abstract class LargeMessageModeSession extends ImsServiceSession implemen
             mImdnManager.sendMessageDeliveryStatus(chatId, msg.getRemoteContact(),
                     msg.getMessageId(), ImdnDocument.DeliveryStatus.DELIVERED, getTimestamp());
         }
-        for (StandaloneMessagingSessionListener listener : getEventListeners()) {
-            listener.onMessageReceived(getConversationID(), msg, imdnDisplayedRequested, true);
+        for (ImsSessionListener listener : getListeners()) {
+            ((ChatSessionListener) listener).onMessageReceived(msg, imdnDisplayedRequested, true);
         }
     }
 
@@ -385,17 +377,6 @@ public abstract class LargeMessageModeSession extends ImsServiceSession implemen
     }
 
     @Override
-    public void startSession() throws PayloadException, NetworkException {
-        // getImsService().getImsModule().getInstantMessagingService().addSession(this);
-        // start();
-    }
-
-    @Override
-    public void removeSession() {
-        // getImsService().getImsModule().getInstantMessagingService().removeSession(this);
-    }
-
-    @Override
     public void handleError(ImsServiceError error) {
         if (isSessionInterrupted()) {
             return;
@@ -408,60 +389,37 @@ public abstract class LargeMessageModeSession extends ImsServiceSession implemen
         removeSession();
 
         if (!isInitiatedByRemote()) {
-            String chatId = getChatID();
             String msgId = mChatMsg.getMessageId();
             String mimeType = mChatMsg.getMimeType();
-            for (StandaloneMessagingSessionListener listener : getEventListeners()) {
-                listener.onMessageFailedSend(chatId, msgId, mimeType);
+            for (ImsSessionListener listener : getListeners()) {
+                ((ChatSessionListener) listener).onMessageFailedSend(msgId, mimeType);
             }
         }
     }
 
     @Override
-    public void onSessionStarted(ContactId contact) {
-        /* Not used: standalone message is sent in startMediaTransfer() */
-        if (sLogger.isActivated()) {
-            sLogger.info("Session started");
-        }
+    public void startSession() throws PayloadException, NetworkException {
+        // getImsService().getImsModule().getInstantMessagingService().addSession(this);
+        start();
     }
 
     @Override
-    public void onSessionAborted(ContactId contact, TerminationReason reason) {
-        if (sLogger.isActivated()) {
-            sLogger.info("Session aborted: reason=" + reason);
-        }
+    public void removeSession() {
+        // getImsService().getImsModule().getInstantMessagingService().removeSession(this);
+    }
+
+    @Override
+    public void terminateSession(TerminationReason reason) throws PayloadException,
+            NetworkException {
+        super.terminateSession(reason);
         if (!isInitiatedByRemote()) {
             if (!isMsgTransferred()) {
-                String chatId = getChatID();
                 String msgId = mChatMsg.getMessageId();
                 String mimeType = mChatMsg.getMimeType();
-                for (StandaloneMessagingSessionListener listener : getEventListeners()) {
-                    listener.onMessageFailedSend(chatId, msgId, mimeType);
+                for (ImsSessionListener listener : getListeners()) {
+                    ((ChatSessionListener) listener).onMessageFailedSend(msgId, mimeType);
                 }
             }
-        }
-    }
-
-    @Override
-    public void onSessionRejected(ContactId contact, TerminationReason reason) {
-        if (sLogger.isActivated()) {
-            sLogger.info("Session rejected: reason=" + reason);
-        }
-        if (!isInitiatedByRemote()) {
-            String chatId = getChatID();
-            String msgId = mChatMsg.getMessageId();
-            String mimeType = mChatMsg.getMimeType();
-            for (StandaloneMessagingSessionListener listener : getEventListeners()) {
-                listener.onMessageFailedSend(chatId, msgId, mimeType);
-            }
-        }
-    }
-
-    @Override
-    public void onSessionAccepting(ContactId contact) {
-        /* Not used: standalone message session is always auto accepted */
-        if (sLogger.isActivated()) {
-            sLogger.info("Session accepting");
         }
     }
 }

@@ -40,7 +40,7 @@ public class OneToOneChatMessageDeleteTask extends DeleteTask.GroupedByContactId
 //    private static final String SELECTION_ONETOONE_CHATMESSAGES = MessageData.KEY_CHAT_ID + "="
 //            + MessageData.KEY_CONTACT;
     private static final String SELECTION_ONETOONE_CHATMESSAGES =  MessageData.KEY_CONTACT + " != "
-        +" NULL AND " + MessageData.KEY_CONTACT + " has ';'";
+        +" NULL AND " + MessageData.KEY_CONTACT + " has no ';'";
 
     private static final String SELECTION_ONETOONE_CHATMESSAGES_BY_CHATID = MessageData.KEY_CHAT_ID
             + "=?";
@@ -103,16 +103,9 @@ public class OneToOneChatMessageDeleteTask extends DeleteTask.GroupedByContactId
 
     @Override
     protected void onRowDelete(ContactId contact, String msgId) throws PayloadException {
-        /* Not used */
-    }
-
-    @Override
-    protected void onCompleted(ContactId contact, Set<String> msgIds) {
-        DeliveryExpirationManager expirationManager = mImService.getDeliveryExpirationManager();
-        for (String messageId : msgIds) {
-            expirationManager.cancelDeliveryTimeoutAlarm(messageId);
+        if (isSingleRowDelete()) {
+            return;
         }
-
         try {
             ChatSession session = mImService.getOneToOneChatSession(contact);
             if (session != null) {
@@ -129,6 +122,14 @@ public class OneToOneChatMessageDeleteTask extends DeleteTask.GroupedByContactId
             }
         }
         mChatService.removeOneToOneChat(contact);
+    }
+
+    @Override
+    protected void onCompleted(ContactId contact, Set<String> msgIds) {
+        DeliveryExpirationManager expirationManager = mImService.getDeliveryExpirationManager();
+        for (String messageId : msgIds) {
+            expirationManager.cancelDeliveryTimeoutAlarm(messageId);
+        }
         mChatService.broadcastOneToOneMessagesDeleted(contact, msgIds);
     }
 }

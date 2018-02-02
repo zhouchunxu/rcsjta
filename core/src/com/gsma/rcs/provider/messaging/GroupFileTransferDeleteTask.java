@@ -65,6 +65,7 @@ public class GroupFileTransferDeleteTask extends DeleteTask.GroupedByChatId {
                 FileTransferData.KEY_CHAT_ID, SELECTION_ALL_GROUP_FILETRANSFERS);
         mFileTransferService = fileTransferService;
         mImService = imService;
+        setAllAtOnce(true);
     }
 
     /**
@@ -81,6 +82,7 @@ public class GroupFileTransferDeleteTask extends DeleteTask.GroupedByChatId {
                 FileTransferData.KEY_CHAT_ID, SELECTION_FILETRANSFER_BY_CHATID, chatId);
         mFileTransferService = fileTransferService;
         mImService = imService;
+        setAllAtOnce(true);
     }
 
     /**
@@ -139,5 +141,4 @@ public class GroupFileTransferDeleteTask extends DeleteTask.GroupedByChatId {
         }
         mFileTransferService.broadcastGroupFileTransfersDeleted(chatId, transferIds);
     }
-
 }

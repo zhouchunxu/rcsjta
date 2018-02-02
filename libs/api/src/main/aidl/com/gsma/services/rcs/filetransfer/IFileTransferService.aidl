@@ -25,6 +25,10 @@ interface IFileTransferService {
 
 	void removeEventListener(IRcsServiceRegistrationListener listener);
 
+	int getServiceVersion();
+
+	ICommonServiceConfiguration getCommonConfiguration();
+
 	IFileTransferServiceConfiguration getConfiguration();
 
 	IFileTransfer getFileTransfer(in String transferId);
@@ -49,8 +53,6 @@ interface IFileTransferService {
 
 	void removeEventListener3(in IGroupFileTransferListener listener);
 
-	int getServiceVersion();
-
 	boolean isAllowedToTransferFile(in ContactId contact);
 
 	boolean isAllowedToTransferFileToMany(in List<ContactId> contacts);
@@ -72,8 +74,6 @@ interface IFileTransferService {
 	void deleteFileTransfer(in String transferId);
 
 	void clearFileTransferDeliveryExpiration(in List<String> transferIds);
-
-	ICommonServiceConfiguration getCommonConfiguration();
 
 	IFileTransfer transferFile2(in ContactId contact, in Uri file, in int disposition, in boolean attachFileicon);
 

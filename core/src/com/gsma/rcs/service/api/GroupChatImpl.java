@@ -27,10 +27,10 @@ import com.gsma.rcs.core.ims.network.NetworkException;
 import com.gsma.rcs.core.ims.protocol.PayloadException;
 import com.gsma.rcs.core.ims.protocol.msrp.MsrpSession.TypeMsrpChunk;
 import com.gsma.rcs.core.ims.protocol.sip.SipDialogPath;
+import com.gsma.rcs.core.ims.service.SessionNotEstablishedException;
 import com.gsma.rcs.core.ims.service.ContactInfo.RcsStatus;
 import com.gsma.rcs.core.ims.service.ContactInfo.RegistrationState;
 import com.gsma.rcs.core.ims.service.ImsServiceSession.TerminationReason;
-import com.gsma.rcs.core.ims.service.SessionNotEstablishedException;
 import com.gsma.rcs.core.ims.service.capability.Capabilities;
 import com.gsma.rcs.core.ims.service.capability.Capabilities.CapabilitiesBuilder;
 import com.gsma.rcs.core.ims.service.im.InstantMessagingService;
@@ -57,15 +57,15 @@ import com.gsma.services.rcs.Geoloc;
 import com.gsma.services.rcs.RcsService.Direction;
 import com.gsma.services.rcs.chat.Card;
 import com.gsma.services.rcs.chat.ChatLog;
-import com.gsma.services.rcs.chat.ChatLog.Message.Content;
-import com.gsma.services.rcs.chat.ChatLog.Message.GroupChatEvent;
-import com.gsma.services.rcs.chat.ChatLog.GroupChat.Participant.Status;
-import com.gsma.services.rcs.chat.ChatLog.GroupChat.ReasonCode;
-import com.gsma.services.rcs.chat.ChatLog.GroupChat.State;
 import com.gsma.services.rcs.chat.CloudFile;
 import com.gsma.services.rcs.chat.Emoticon;
 import com.gsma.services.rcs.chat.IChatMessage;
 import com.gsma.services.rcs.chat.IGroupChat;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.ReasonCode;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.State;
+import com.gsma.services.rcs.chat.ChatLog.GroupChat.Participant.Status;
+import com.gsma.services.rcs.chat.ChatLog.Message.Content;
+import com.gsma.services.rcs.chat.ChatLog.Message.GroupChatEvent;
 import com.gsma.services.rcs.contact.ContactId;
 import com.gsma.services.rcs.groupdelivery.GroupDeliveryInfo;
 
@@ -1154,7 +1154,7 @@ public class GroupChatImpl extends IGroupChat.Stub implements GroupChatSessionLi
                     msg.getMimeType(), mChatId, Direction.OUTGOING);
             /* Always insert message with status QUEUED */
             addOutgoingGroupChatMessage(msg, Content.Status.QUEUED, Content.ReasonCode.UNSPECIFIED);
-            if (!mChatService.isGroupChatActive(mChatId)) {
+            if (!isGroupChatActive()) {
                 /*
                  * Set inactive group chat as active as it now has a queued entry that has to be
                  * dequeued after rejoining to the group chat on regaining IMS connection.
@@ -1212,7 +1212,7 @@ public class GroupChatImpl extends IGroupChat.Stub implements GroupChatSessionLi
                     geolocMsg.getContent(), geolocMsg.getMimeType(), mChatId, Direction.OUTGOING);
             addOutgoingGroupChatMessage(geolocMsg, Content.Status.QUEUED,
                     Content.ReasonCode.UNSPECIFIED);
-            if (!mChatService.isGroupChatActive(mChatId)) {
+            if (!isGroupChatActive()) {
                 /*
                  * Set inactive group chat as active as it now has a queued entry that has to be
                  * dequeued after rejoining to the group chat on regaining IMS connection.
@@ -1480,8 +1480,10 @@ public class GroupChatImpl extends IGroupChat.Stub implements GroupChatSessionLi
             boolean updateStateToStarted = ChatLog.GroupChat.State.STARTED != mPersistedStorage.getState();
             mPersistedStorage.setRejoinId(session.getImSessionIdentity(), updateStateToStarted);
             if (updateStateToStarted) {
-                mChatService.broadcastGroupChatStateChange(mChatId, ChatLog.GroupChat.State.STARTED,
+                mBroadcaster.broadcastStateChanged(mChatId, ChatLog.GroupChat.State.STARTED,
                         ChatLog.GroupChat.ReasonCode.UNSPECIFIED);
+//                mChatService.setGroupChatStateAndReasonCode(mChatId, ChatLog.GroupChat.State.STARTED,
+//                        ChatLog.GroupChat.ReasonCode.UNSPECIFIED);
             }
         }
         mImService.tryToInviteQueuedGroupChatParticipantInvitations(mChatId);
@@ -1830,7 +1832,7 @@ public class GroupChatImpl extends IGroupChat.Stub implements GroupChatSessionLi
 
     @Override
     public void onSessionAutoAccepted(ContactId contact, String subject,
-                                      Map<ContactId, Status> participants, long timestamp) {
+            Map<ContactId, Status> participants, long timestamp) {
         if (sLogger.isActivated()) {
             sLogger.info("Session auto accepted");
         }

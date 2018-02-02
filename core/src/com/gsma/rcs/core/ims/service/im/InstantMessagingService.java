@@ -79,11 +79,11 @@ import com.gsma.rcs.core.ims.service.im.filetransfer.msrp.OriginatingMsrpFileSha
 import com.gsma.rcs.core.ims.service.im.filetransfer.msrp.OriginatingMsrpGroupFileSharingSession;
 import com.gsma.rcs.core.ims.service.im.filetransfer.msrp.OriginatingMsrpOneToManyFileSharingSession;
 import com.gsma.rcs.core.ims.service.im.filetransfer.msrp.TerminatingMsrpFileSharingSession;
-import com.gsma.rcs.core.ims.service.im.standalone.LargeMessageModeSession;
-import com.gsma.rcs.core.ims.service.im.standalone.OriginatingLargeMessageModeSession;
-import com.gsma.rcs.core.ims.service.im.standalone.OriginatingOneToManyLargeMessageModeSession;
-import com.gsma.rcs.core.ims.service.im.standalone.SmsManager;
-import com.gsma.rcs.core.ims.service.im.standalone.TerminatingLargeMessageModeSession;
+import com.gsma.rcs.core.ims.service.im.chat.LargeMessageModeSession;
+import com.gsma.rcs.core.ims.service.im.chat.OriginatingLargeMessageModeSession;
+import com.gsma.rcs.core.ims.service.im.chat.OriginatingOneToManyLargeMessageModeSession;
+import com.gsma.rcs.core.ims.service.im.chat.pager.SmsManager;
+import com.gsma.rcs.core.ims.service.im.chat.TerminatingLargeMessageModeSession;
 import com.gsma.rcs.core.ims.service.upload.FileUploadSession;
 import com.gsma.rcs.provider.LocalContentResolver;
 import com.gsma.rcs.provider.contact.ContactManager;
@@ -99,6 +99,7 @@ import com.gsma.rcs.provider.messaging.GroupChatMessageDeleteTask;
 import com.gsma.rcs.provider.messaging.GroupFileTransferDeleteTask;
 import com.gsma.rcs.provider.messaging.MessagingLog;
 import com.gsma.rcs.provider.messaging.OneToManyChatMessageDeleteTask;
+import com.gsma.rcs.provider.messaging.OneToManyChatMessageDequeueTask;
 import com.gsma.rcs.provider.messaging.OneToManyFileTransferDeleteTask;
 import com.gsma.rcs.provider.messaging.OneToOneChatMessageDeleteTask;
 import com.gsma.rcs.provider.messaging.OneToOneChatMessageDequeueTask;
@@ -770,7 +771,7 @@ public class InstantMessagingService extends ImsService {
         }
         switch (ftProtocol) {
             case HTTP:
-                /* Protocol not supported */
+                /* TODO: Protocol not supported */
                 throw new IllegalArgumentException("Unsupported FileTransferProtocol " + ftProtocol);
             case MSRP:
                 /*
@@ -1046,7 +1047,7 @@ public class InstantMessagingService extends ImsService {
                     LargeMessageModeSession session = new TerminatingLargeMessageModeSession(
                             imService, invite, remote, mRcsSettings, mMessagingLog, timestamp,
                             mContactManager);
-                    mSmsManager.receiveLargeMessageModeInvitation(session);
+                    mChatService.receiveLargeMessageModeInvitation(session);
                     session.startSession();
 
                 } catch (NetworkException e) {
@@ -1500,7 +1501,8 @@ public class InstantMessagingService extends ImsService {
                             if (sLogger.isActivated()) {
                                 sLogger.debug("Handle one to one message delivery status");
                             }
-                            mChatService.onOneToOneMessageDeliveryStatusReceived(contact, imdn);
+                            mChatService.getOrCreateOneToOneChat(contact)
+                                    .onOneToOneMessageDeliveryStatusReceived(contact, imdn);
                             return;
                         }
                         mChatService.getOrCreateGroupChat(chatId).onMessageDeliveryStatusReceived(
@@ -2185,6 +2187,17 @@ public class InstantMessagingService extends ImsService {
     }
 
     /**
+     * Try to dequeue of one-to-many chat messages for specific contact
+     *
+     * @param chatId the chat ID
+     */
+    public void tryToDequeueOneToManyChatMessages(String chatId) {
+        mImOperationHandler.post(new OneToManyChatMessageDequeueTask(mCtx, mCore, chatId,
+                mMessagingLog, mChatService, mRcsSettings, mContactManager, mFileTransferService));
+
+    }
+
+    /**
      * Try to dequeue group chat messages and group file transfers
      * 
      * @param chatId the chat ID
@@ -2352,17 +2365,6 @@ public class InstantMessagingService extends ImsService {
     }
 
     /**
-     * Try to delete file transfer corresponding to a given one to one chat specified by contact
-     * from history and abort/reject any associated ongoing session if such exists.
-     *
-     * @param contact the contact ID
-     */
-    public void tryToDeleteStandaloneMessages(ContactId contact) {
-//        mImDeleteOperationHandler.post(new OneToOneFileTransferDeleteTask(mFileTransferService,
-//                this, mLocalContentResolver, contact));
-    }
-
-    /**
      * Delete a message from its message id from history. Will resolve if the message is one to one
      * or from a group chat.
      * 
@@ -2413,7 +2415,7 @@ public class InstantMessagingService extends ImsService {
     }
 
     /**
-     * Try to delete file transfer corresponding to a one to many chat specified by its chat id from
+     * Try to delete file transfer corresponding to an one to many chat specified by its chat id from
      * history and abort/reject any associated ongoing session if such exists.
      *
      * @param chatId the chat ID
@@ -2459,10 +2461,6 @@ public class InstantMessagingService extends ImsService {
     public void tryToDeleteGroupFileTransfers() {
         mImDeleteOperationHandler.post(new GroupFileTransferDeleteTask(mFileTransferService, this,
                 mLocalContentResolver));
-    }
-
-    public void onOneToManyChatMessagesDeleted(String chatId, Set<String> msgId) {
-        // TODO
     }
 
     /**

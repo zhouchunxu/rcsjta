@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2014 Sony Mobile Communications Inc.
  * Copyright (C) 2010-2016 Orange.
+ * Copyright (C) 2017 China Mobile.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -103,7 +104,7 @@ public class OneToOneFileTransferBroadcaster implements IOneToOneFileTransferBro
 
 
     @Override
-    public void broadcastFileTransferDeleted(ContactId contact, Set<String> filetransferIds) {
+    public void broadcastFileTransfersDeleted(ContactId contact, Set<String> filetransferIds) {
         List<String> ids = new ArrayList<>(filetransferIds);
         final int N = mOneToOneFileTransferListeners.beginBroadcast();
         for (int i = 0; i < N; i++) {

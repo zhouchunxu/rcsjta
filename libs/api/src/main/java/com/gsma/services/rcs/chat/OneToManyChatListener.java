@@ -16,23 +16,24 @@
  * limitations under the License.
  ******************************************************************************/
 
-package com.gsma.services.rcs.chat.sms;
+package com.gsma.services.rcs.chat;
 
 import com.gsma.services.rcs.chat.ChatLog.Message.Content.ReasonCode;
 import com.gsma.services.rcs.chat.ChatLog.Message.Content.Status;
 import com.gsma.services.rcs.contact.ContactId;
+import com.gsma.services.rcs.groupdelivery.GroupDeliveryInfo;
 
 import java.util.Set;
 
 /**
- * One to one standalone messaging events listener
+ * One-to-Many Chat event listener
  */
-public abstract class OneToOneStandaloneMessagingListener {
+public abstract class OneToManyChatListener {
 
     /**
      * Callback called when a message status/reasonCode is changed.
      * 
-     * @param chatId Chat Id
+     * @param chatId Chat id
      * @param mimeType MIME-type of message
      * @param msgId Message Id
      * @param status Status
@@ -42,11 +43,26 @@ public abstract class OneToOneStandaloneMessagingListener {
             Status status, ReasonCode reasonCode);
 
     /**
+     * Callback called when a group delivery info status/reasonCode was changed for a single
+     * recipient to a group message.
+     *
+     * @param chatId Chat id
+     * @param contact Contact
+     * @param mimeType MIME-type
+     * @param msgId Message id
+     * @param status Message status
+     * @param reasonCode Status reason code
+     */
+    public abstract void onMessageDeliveryInfoChanged(String chatId, ContactId contact,
+            String mimeType, String msgId, GroupDeliveryInfo.Status status,
+            GroupDeliveryInfo.ReasonCode reasonCode);
+
+    /**
      * Callback called when a delete operation completed that resulted in that one or several
      * standalone messages was deleted specified by the msgIds parameter corresponding to a specific
      * chat id.
      *
-     * @param chatId Chat Id
+     * @param chatId Chat id
      * @param msgIds Message ids of those deleted messages
      */
     public abstract void onMessagesDeleted(String chatId, Set<String> msgIds);

@@ -16,12 +16,12 @@
  * limitations under the License.
  ******************************************************************************/
 
-package com.gsma.services.rcs.chat.sms;
+package com.gsma.services.rcs.chat;
 
 import com.gsma.services.rcs.chat.ChatLog.Message.Content.ReasonCode;
 import com.gsma.services.rcs.chat.ChatLog.Message.Content.Status;
-import com.gsma.services.rcs.groupdelivery.GroupDeliveryInfo;
 import com.gsma.services.rcs.contact.ContactId;
+import com.gsma.services.rcs.groupdelivery.GroupDeliveryInfo;
 
 import android.os.RemoteException;
 import android.util.Log;
@@ -30,16 +30,15 @@ import java.util.HashSet;
 import java.util.List;
 
 /**
- * One to many standalone messaging event listener implementation
+ * One-to-Many Chat event listener implementation
  */
-public class OneToManyStandaloneMessagingListenerImpl extends
-        IOneToManyStandaloneMessagingListener.Stub {
+public class OneToManyChatListenerImpl extends IOneToManyChatListener.Stub {
 
-    private final OneToManyStandaloneMessagingListener mListener;
+    private final OneToManyChatListener mListener;
 
-    private final static String LOG_TAG = OneToManyStandaloneMessagingListenerImpl.class.getName();
+    private final static String LOG_TAG = OneToManyChatListenerImpl.class.getName();
 
-    OneToManyStandaloneMessagingListenerImpl(OneToManyStandaloneMessagingListener listener) {
+    OneToManyChatListenerImpl(OneToManyChatListener listener) {
         mListener = listener;
     }
 
